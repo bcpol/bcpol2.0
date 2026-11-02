@@ -7,6 +7,7 @@ Requires:
   remote branch origin/backup-before-auth-hardening-20261102
 """
 import json
+import getpass
 import os
 import re
 import subprocess
@@ -33,9 +34,43 @@ def rpc(name, payload):
     except HTTPError as exc:
         raise RuntimeError("La importación ha fallado; comprueba los permisos del servidor.") from None
 
+def test_login():
+    base = os.environ.get("SUPABASE_URL", "").strip().rstrip("/")
+    if not base.startswith("https://"):
+        raise RuntimeError("Configura SUPABASE_URL.")
+    username = input("Usuario que deseas comprobar: ").strip()
+    password = getpass.getpass("Contraseña (oculta): ")
+    url = base + "/functions/v1/bcpol-web-auth"
+    def request(action, token=None):
+        body = {"action": action}
+        if action == "login":
+            body.update({"username": username, "password": password})
+        else:
+            body["token"] = token
+        req = Request(url, data=json.dumps(body).encode("utf-8"),
+                      method="POST", headers={"Content-Type": "application/json"})
+        with urlopen(req, timeout=15) as response:
+            return json.loads(response.read())
+    try:
+        logged_in = request("login")
+        if not logged_in.get("ok") or not logged_in.get("token"):
+            raise RuntimeError("Login no validado.")
+        verified = request("verify", logged_in["token"])
+        if not verified.get("ok") or verified.get("username") != username:
+            raise RuntimeError("La sesión no se ha validado.")
+        request("logout", logged_in["token"])
+    except HTTPError:
+        raise RuntimeError("El acceso no se ha validado. Revisa usuario, contraseña y backend.") from None
+    finally:
+        password = ""
+    print("Prueba completa: login, verificación de sesión y cierre correctos.")
+
 def main():
+    if len(sys.argv) == 2 and sys.argv[1] == "--test":
+        test_login()
+        return 0
     if len(sys.argv) != 2 or sys.argv[1] != "--migrate":
-        print("Para ejecutar la migración privada: python scripts/migrate_web_accounts.py --migrate")
+        print("Uso: python3 scripts/migrate_web_accounts.py --migrate | --test")
         return 2
     old = subprocess.check_output(["git", "show", SOURCE_REF], stderr=subprocess.DEVNULL).decode("utf-8")
     match = re.search(r"const usuarios=(\{[^;]+?\});", old)
