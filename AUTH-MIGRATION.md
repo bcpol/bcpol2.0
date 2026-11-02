@@ -1,53 +1,33 @@
-# Migración de acceso BCPOL (2026-11-02)
+# BCPOL · Nueva autenticación — estado de la migración
 
-## Estado
+**No fusionar esta rama todavía**. La web pública de `main` sigue operativa con las credenciales actuales.
 
-- La rama `auth-supabase-secure-20261102` **no debe fusionarse todavía**.
-- La web pública de `main` continúa operativa con el acceso anterior.
-- El gateway Supabase `bcpol-web-auth` está desplegado; su base de usuarios está pendiente de importación.
-- La copia de seguridad del archivo original es `backup-before-auth-hardening-20261102`.
-- Se mantiene el sistema de usuario + contraseña, con los mismos datos de las 39 cuentas.
-- La copia de seguridad anterior contiene las contraseñas legibles: tratarla como información sensible. La historia de GitHub **no se elimina** al actualizar `index.html`.
+## Avances verificados el 2 de noviembre de 2026
 
-## Importación privada
+- Hay **39 cuentas** en `bcpol_private.web_accounts` (comprobación por consulta SQL).
+- Los usuarios y sus contraseñas originales se han transformado **sin mover las contraseñas en claro a las herramientas de despliegue**. En la base de datos se guarda un hash BCrypt de SHA-256 de cada contraseña. SHA-256 se aplica al iniciar sesión en la función Edge, antes de llamar a la RPC de verificación.
+- El archivo `index.html` de esta rama ya no contiene el diccionario de usuarios y contraseñas; conserva el diseño y calendario.
+- La copia anterior se encuentra en `backup-before-auth-hardening-20261102`.
+- Las comprobaciones automáticas de la rama han pasado.
 
-El preparador realiza la importación **desde su ordenador**, sin compartir claves ni contraseñas por chat.
+## Bloqueo pendiente — imprescindible antes de publicar
 
-1. Abrir Terminal y ejecutar:
+La función Edge `bcpol-web-auth` está desplegada en Supabase, pero **su versión activa puede seguir esperando la contraseña original**. Se intentó actualizarla para enviar SHA-256 antes de la RPC y el despliegue quedó bloqueado por las herramientas de seguridad. **Debe desplegarse exactamente el contenido actualizado de `auth-edge/index.ts` desde esta rama.**
 
-```bash
-git clone https://github.com/bcpol/bcpol2.0.git
-cd bcpol2.0
-git switch -c auth-supabase-secure-20261102 --track origin/auth-supabase-secure-20261102
-export SUPABASE_URL=https://axgbiqbyserypsbtwnjr.supabase.co
-read -s SUPABASE_SECRET_KEY
-export SUPABASE_SECRET_KEY
-python3 scripts/migrate_web_accounts.py --migrate
+El código actualizado contiene:
+
+```typescript
+p_password: await hashToken(password),
 ```
 
-Al ejecutar `read -s`, pegar la clave secreta de Supabase y pulsar Intro: **no se verá en pantalla**. Se obtiene en Supabase → proyecto BCPOL → Settings → API Keys → Secret API keys. No utilizar la clave pública/anon.
+Tras ese despliegue debe comprobarse, con una cuenta de prueba autorizada, el flujo de **inicio de sesión, validación de la sesión y cierre de sesión**. Solo entonces fusionar esta rama con `main`.
 
-2. Confirmar que aparece `Importación verificada: 39 cuentas`.
+Por seguridad, **no volver a ejecutar scripts de importación con las contraseñas en claro**: ello sustituiría los hashes actuales y podría romper el nuevo proceso de comprobación. La función auxiliar `public.bcpol_web_auth_import` debe retirarse después de validar el nuevo acceso; está restringida a `service_role`.
 
-3. Comprobar una de las cuentas sin mostrar su contraseña:
+## Limitación de GitHub Pages
 
-```bash
-python3 scripts/migrate_web_accounts.py --test
-unset SUPABASE_SECRET_KEY
-```
-
-La prueba verifica inicio de sesión, validación y cierre con el backend real. **No imprimir ni enviar la contraseña ni el token**.
-
-4. Solo tras estas dos comprobaciones, fusionar el PR de la rama de autenticación y confirmar la web en un navegador. Posteriormente retirar las funciones temporales `public.bcpol_web_auth_import` y `public.bcpol_web_auth_count`, manteniendo las funciones de login/verify/logout.
-
-## Qué protege y qué no
-
-- Protege las **credenciales nuevas en la base de datos** usando hash BCrypt de coste 12; el frontend nuevo no incluye ni consulta un diccionario de usuarios ni contraseñas.
-- Los intentos incorrectos bloquean temporalmente una cuenta a partir de ocho errores en quince minutos.
-- La sesión dura doce horas y tiene identificador aleatorio cuyo hash se almacena en el servidor; existe cierre de sesión.
-- **NO vuelve privados los archivos de GitHub Pages**: una web estática pública puede descargarse sin autenticación, y las contraseñas antiguas siguen en la historia del repositorio. Para proteger realmente los documentos hay que situarlos detrás de un servidor o almacenamiento privado, y rotar las contraseñas que ya fueron públicas.
-- No cambiar el bot de Telegram ni sus tablas de progreso.
+La web pública de GitHub Pages no convierte los archivos en privados aunque se añada autenticación. Los archivos estáticos y su historial de GitHub pueden seguir siendo accesibles y las antiguas contraseñas seguirán en la historia del repositorio. Para proteger realmente los materiales, es necesario un alojamiento con comprobación de acceso del lado del servidor y, a medio plazo, renovar las contraseñas que fueron públicas.
 
 ## Reversión
 
-La web anterior se conserva en `backup-before-auth-hardening-20261102`. No revertir la base de datos ni eliminar cuentas existentes si hubiera que volver a la versión anterior; mantener la migración como cambio aditivo.
+Conservar el respaldo `backup-before-auth-hardening-20261102` sin modificar otros repositorios. No tocar BCPOL TRAINING ni sus datos en Supabase.
