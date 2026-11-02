@@ -72,7 +72,7 @@ Deno.serve(async (req: Request) => {
       const token = freshToken();
       const ok = await callRpc<boolean>("bcpol_web_auth_login", {
         p_username: username,
-        p_password: password,
+        p_password: await hashToken(password),
         p_token_hash: await hashToken(token),
       });
       return ok
