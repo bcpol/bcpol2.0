@@ -4,7 +4,7 @@
 Requires:
   SUPABASE_URL=https://<project>.supabase.co
   SUPABASE_SECRET_KEY=<server-side key>
-  git history containing backup-before-auth-hardening-20261102
+  remote branch origin/backup-before-auth-hardening-20261102
 """
 import json
 import os
@@ -14,7 +14,7 @@ import sys
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
 
-SOURCE_REF = "backup-before-auth-hardening-20261102:index.html"
+SOURCE_REF = "origin/backup-before-auth-hardening-20261102:index.html"
 
 def rpc(name, payload):
     base = os.environ.get("SUPABASE_URL", "").strip().rstrip("/")
