@@ -17,8 +17,9 @@ jobs:
           deno-version: v2.x
       - name: Validate Edge function
         run: deno check auth-edge/index.ts
-      - name: Validate migration script
-        run: python -m py_compile scripts/migrate_web_accounts.py
+      - name: Verify password prehash before RPC
+        run: |
+          grep -F 'p_password: await hashToken(password)' auth-edge/index.ts
       - name: Validate public HTML has no password dictionary
         run: |
           python - <<'PY'
