@@ -1,0 +1,52 @@
+name: BCPOL web auth staging checks
+on:
+  push:
+    branches:
+      - auth-supabase-secure-20261102
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-auth-change:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Validate Edge function
+        run: deno check auth-edge/index.ts
+      - name: Validate migration script
+        run: python -m py_compile scripts/migrate_web_accounts.py
+      - name: Validate public HTML has no password dictionary
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          html=Path('index.html').read_text()
+          assert 'const usuarios=' not in html
+          assert "bcpol-web-auth" in html
+          assert "logoutBCPOL()" in html
+          assert "04/11/2026" in html
+          assert "convocatoriasData" in html
+          print("HTML verificado: sin contraseñas, calendario y convocatorias conservados")
+          PY
+      - name: Validate HTML embedded JavaScript
+        run: |
+          python - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          class Scripts(HTMLParser):
+              active=False
+              data=[]
+              def handle_starttag(self, tag, attrs):
+                  if tag=="script" and not dict(attrs).get("src"): self.active=True; self.data.append("")
+              def handle_data(self, data):
+                  if self.active:self.data[-1]+=data
+              def handle_endtag(self, tag):
+                  if tag=="script":self.active=False
+          p=Scripts();p.feed(Path('index.html').read_text())
+          for i,s in enumerate(p.data):
+              if s.strip():Path(f'/tmp/inline-{i}.js').write_text(s)
+          PY
+          for file in /tmp/inline-*.js; do node --check "$file"; done
