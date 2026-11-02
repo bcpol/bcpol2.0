@@ -1,33 +1,27 @@
-# BCPOL · Nueva autenticación — estado de la migración
+# BCPOL — Protección del acceso de alumnos (noviembre de 2026)
 
-**No fusionar esta rama todavía**. La web pública de `main` sigue operativa con las credenciales actuales.
+## Sistema implantado
 
-## Avances verificados el 2 de noviembre de 2026
+- El acceso `bcpol.es` usa el servicio `bcpol-web-auth` de Supabase, con verificación del lado del servidor.
+- Se preservan **39 cuentas** y las contraseñas originales, sin mostrarlas ni incluirlas en `index.html`.
+- Las contraseñas se almacenan como **BCrypt(SHA-256(contraseña original))** en el esquema restringido `bcpol_private`.
+- El servicio Edge calcula SHA-256 antes de consultar la verificación en la base de datos.
+- Se emiten tokens aleatorios de sesión que se guardan mediante su hash SHA-256. Cada sesión vence a las 12 horas y puede cerrarse.
+- La función de autenticación controla los intentos fallidos y aplica bloqueos temporales.
+- La prueba de login en la URL independiente `prueba-acceso.html` ha sido realizada satisfactoriamente por el preparador. Las pruebas automáticas de la rama también fueron satisfactorias.
+- No se alteran las cuentas ni los progresos de BCPOL TRAINING.
 
-- Hay **39 cuentas** en `bcpol_private.web_accounts` (comprobación por consulta SQL).
-- Los usuarios y sus contraseñas originales se han transformado **sin mover las contraseñas en claro a las herramientas de despliegue**. En la base de datos se guarda un hash BCrypt de SHA-256 de cada contraseña. SHA-256 se aplica al iniciar sesión en la función Edge, antes de llamar a la RPC de verificación.
-- El archivo `index.html` de esta rama ya no contiene el diccionario de usuarios y contraseñas; conserva el diseño y calendario.
-- La copia anterior se encuentra en `backup-before-auth-hardening-20261102`.
-- Las comprobaciones automáticas de la rama han pasado.
+## Copias y restauración
 
-## Bloqueo pendiente — imprescindible antes de publicar
+- Versión anterior: rama `backup-before-auth-activation-20261102`.
+- Respaldos anteriores: `backup-before-auth-hardening-20261102`.
+- Revertir `index.html` a la rama de respaldo puede restaurar el inicio de sesión antiguo, pero **no mejora su seguridad**, porque las claves originales ya estuvieron expuestas en GitHub.
+- No se deben borrar las tablas de Supabase ni los datos del bot en una reversión de la web.
 
-La función Edge `bcpol-web-auth` está desplegada en Supabase, pero **su versión activa puede seguir esperando la contraseña original**. Se intentó actualizarla para enviar SHA-256 antes de la RPC y el despliegue quedó bloqueado por las herramientas de seguridad. **Debe desplegarse exactamente el contenido actualizado de `auth-edge/index.ts` desde esta rama.**
+## Limitaciones y riesgos pendientes
 
-El código actualizado contiene:
+La autenticación nueva **no convierte en privados los recursos estáticos de GitHub Pages**. Los archivos publicados (y la historia pública anterior del repositorio) pueden seguir siendo accesibles sin autenticación. El control de acceso real a documentos privados requiere almacenamiento privado y verificación de autorización en el servidor.
 
-```typescript
-p_password: await hashToken(password),
-```
+Dado que las contraseñas anteriores ya estuvieron expuestas en el código público, **es aconsejable renovarlas de forma escalonada** cuando el preparador lo autorice, aunque se hayan conservado ahora para no interrumpir el acceso.
 
-Tras ese despliegue debe comprobarse, con una cuenta de prueba autorizada, el flujo de **inicio de sesión, validación de la sesión y cierre de sesión**. Solo entonces fusionar esta rama con `main`.
-
-Por seguridad, **no volver a ejecutar scripts de importación con las contraseñas en claro**: ello sustituiría los hashes actuales y podría romper el nuevo proceso de comprobación. La función auxiliar `public.bcpol_web_auth_import` debe retirarse después de validar el nuevo acceso; está restringida a `service_role`.
-
-## Limitación de GitHub Pages
-
-La web pública de GitHub Pages no convierte los archivos en privados aunque se añada autenticación. Los archivos estáticos y su historial de GitHub pueden seguir siendo accesibles y las antiguas contraseñas seguirán en la historia del repositorio. Para proteger realmente los materiales, es necesario un alojamiento con comprobación de acceso del lado del servidor y, a medio plazo, renovar las contraseñas que fueron públicas.
-
-## Reversión
-
-Conservar el respaldo `backup-before-auth-hardening-20261102` sin modificar otros repositorios. No tocar BCPOL TRAINING ni sus datos en Supabase.
+Los administradores deben eliminar las funciones de importación temporales después de verificar la migración y conservar únicamente las funciones necesarias de login, verificación y cierre.
