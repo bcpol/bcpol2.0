@@ -83,7 +83,7 @@ declare
  v_target text; v_month text; v_mail text; v_title text; v_url text;
  v_granted boolean; v_verified boolean; v_published boolean; v_number integer;
  v_months jsonb; v_students jsonb;
- v_previous record;
+ v_old_granted boolean; v_old_verified boolean;
 begin
  if p_token_hash is null or p_token_hash !~ '^[a-f0-9]{64}$' or
     p_action is null or length(p_action)>30 or
@@ -160,7 +160,7 @@ begin
      (v_verified and not v_granted) then
     return jsonb_build_object('ok',false,'error','Alumno, mes o permiso incorrecto');
   end if;
-  select granted,drive_verified into v_previous
+  select granted,drive_verified into v_old_granted,v_old_verified
    from bcpol_private.aula_access where username=v_target and month_id=v_month for update;
   insert into bcpol_private.aula_access(username,month_id,granted,drive_verified,updated_by)
    values(v_target,v_month,v_granted,v_verified,v_user)
@@ -168,7 +168,7 @@ begin
     drive_verified=excluded.drive_verified,updated_by=v_user,updated_at=now();
   insert into bcpol_private.aula_access_audit(username,month_id,old_granted,
    new_granted,old_drive_verified,new_drive_verified,changed_by)
-   values(v_target,v_month,v_previous.granted,v_granted,v_previous.drive_verified,v_verified,v_user);
+   values(v_target,v_month,v_old_granted,v_granted,v_old_verified,v_verified,v_user);
   return jsonb_build_object('ok',true);
  end if;
  if p_action='save_class' then
