@@ -13,7 +13,9 @@ Aula independiente con un único botón en la página principal y acceso **por m
 ## Estado verificado (3 de noviembre de 2026)
 - Migración aplicada en el proyecto Supabase de BCPOL, **sin alterar** usuarios, contraseñas, sesiones existentes ni tablas de BCPOL TRAINING.
 - Edge Function independiente `bcpol-aula` desplegada; `bcpol-web-auth` existente intacta.
-- 12 mensualidades creadas; **0 autorizaciones, 0 correos, 0 clases**.
+- 12 mensualidades creadas; **28 correos identificados, 83 derechos mensuales autorizados (28 SEP, 28 OCT, 27 NOV), 9 clases registradas**.
+- Compartición real en Drive **pendiente**: 0 derechos verificados y 0 clases publicadas.
+- Hay una excepción confirmada: Rafa dispone de septiembre y octubre, pero NO de noviembre.
 - El administrador `bcpol` **no está habilitado** en `bcpol_private.aula_admins`. Ningún otro usuario puede administrar.
 - Consulta de prueba sobre 8 sesiones vigentes: todas recibieron una vista válida de 12 meses y todas fueron rechazadas para `admin_snapshot`.
 - `anon` y `authenticated` no disponen de permiso de ejecución de `public.bcpol_aula_api`.
@@ -22,10 +24,10 @@ Aula independiente con un único botón en la página principal y acceso **por m
 1. Revisar diseño de `aula.html?demo=1` en un entorno **de pruebas**. La rama de GitHub no se publica en GitHub Pages automáticamente.
 2. Rotar la contraseña de la cuenta administrativa y **revocar todas sus sesiones antiguas**. Las contraseñas anteriores habían estado en código público; se recomienda renovar las demás también.
 3. Habilitar manualmente un administrador verificado en `bcpol_private.aula_admins` **solo después de completar la rotación**, nunca desde el navegador. Exigir identidad robusta para cambios económicos.
-4. Confirmar lista de alumnos + sus correos de Google y pagos **individualmente**, sin marcar como pagado ningún mes por defecto.
+4. Lista de 28 alumnos y pagos de septiembre a noviembre confirmada por el preparador y registrada. Los siguientes meses todavía no están confirmados. No se debe inferir el pago de ningún mes posterior.
 5. Revisar carpetas heredadas, accesos «cualquiera con enlace» y permisos de `Nube Clases BCPOL`: **ocultar el enlace no impide entrar**.
-6. Organizar las carpetas mensuales y las carpetas semanales; verificar individualmente los permisos antes de marcar `drive_verified` y publicar enlaces.
-7. Auditar la web principal: actualmente existen enlaces directos a Drive que podrían permitir acceder al material por fuera del Aula Virtual. Redirigir o limitar los que afecten a material mensual.
+6. Las 9 carpetas semanales existentes han sido localizadas y catalogadas sin moverlas. Conceder permisos **solo sobre las 9 carpetas semanales** (251 permisos lector: 112 SEP, 112 OCT, 27 NOV) y verificar cada permiso antes de marcar `drive_verified` y publicar enlaces. Se ha preparado un script privado de Apps Script, no incluido en el repositorio público porque contiene correos personales.
+7. **Riesgo comprobado:** la web principal ofrece `Supuesto Semanal` y `Nube BCPOL`, cuyo directorio `11. SUPUESTO SEMANAL` contiene `SUPUESTO 9. MIXTO (CURSO 2026-27). SIN RESOLVER.pdf` fuera de las nueve carpetas del aula. Los enlaces existentes o guardados pueden eludir restricciones mensuales. Revisar y limitar ese acceso separado antes de activar el aula; no se han modificado sus permisos.
 8. Probar desde navegador móvil y escritorio con alumnos con 0, 1, 2 o más meses concedidos; intentar abrir un mes no abonado mediante URL guardada y confirmar que Google Drive lo impide.
 9. Revisar cambios y hacer una copia de la rama `main` antes de integrar. Publicar solo tras aprobación del preparador.
 
