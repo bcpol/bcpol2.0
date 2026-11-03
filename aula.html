@@ -37,8 +37,9 @@ function make(tag,className,text){const e=document.createElement(tag);if(classNa
 function safeFolderUrl(input){try{const u=new URL(input);return u.protocol==='https:'&&u.hostname==='drive.google.com'&&/^\/drive\/folders\/[a-zA-Z0-9_-]+\/?$/.test(u.pathname)?u.href:null;}catch{return null;}}
 function render(data,demo=false){
  const months=document.getElementById('months');months.replaceChildren();
- const list=Array.isArray(data.months)?data.months:calendar;
+ const list=(Array.isArray(data.months)?data.months:calendar).filter(m=>m.granted===true);
  let count=0;
+ if(!list.length)months.append(make('p','empty','Todavía no tienes mensualidades verificadas para esta aula.'));
  for(const m of list){
   const isGranted=m.granted===true;if(isGranted)count++;
   const card=make('article','month'+(isGranted?' yes':''));card.append(make('div','top'));
