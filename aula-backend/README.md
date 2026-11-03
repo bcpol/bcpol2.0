@@ -41,6 +41,13 @@ Aula independiente con un único botón en la página principal y acceso **por m
 - Los PDF y vídeos en Drive nunca se consideran privados por aparecer detrás de un botón de la web.
 - El modo `?demo=1` solo ilustra la interfaz, sin accesos de Google ni datos reales de usuarios.
 
+## Preparación de permisos de Drive (4 de noviembre de 2026)
+- Comprobada la estructura de 9 carpetas de clase (4 septiembre, 4 octubre, 1 noviembre), que incluyen 59 documentos PDF.
+- Preparado localmente **BCPOL_Configurar_Permisos_Drive_9_Clases_2026_V2.gs** para compartir las carpetas con 28 alumnos en septiembre/octubre y 27 en noviembre, 251 asignaciones previstas. El código con correos de alumnos permanece fuera de este repositorio público.
+- Probado en simulación: 251 permisos lector, ausencia de duplicados, exclusión de Rafa en noviembre, detección de accesos públicos y auditoría de 59 archivos. **No se han aplicado permisos reales todavía**.
+- La versión V2 exige auditoría de documentos reciente (24 horas) antes de compartir, verifica propietarios/editores autorizados y funciona por lotes de 30 sin correos de notificación.
+- La carpeta `11. SUPUESTO SEMANAL` está limitada según confirmación del preparador y queda fuera del alcance; **no modificar** sus permisos.
+
 ## Pruebas aún pendientes
 - Verificar el endpoint HTTP desde navegador (el entorno de ejecución de esta tarea no ofrece acceso de red directo con DNS a Supabase).
 - Verificar altas y ediciones con una cuenta admin una vez haya renovado credenciales, sin modificar pagos reales durante la prueba.
