@@ -62,7 +62,9 @@ function render(data,demo=false){
   inner.append(box);card.append(inner);months.append(card);
  }
  document.getElementById('counter').textContent=data.is_teacher===true?count+' meses publicados · Vista del preparador':count+' mensualidad'+(count===1?'':'es')+' con acceso';
- document.getElementById('admin').classList.toggle('hidden',data.is_admin!==true||demo);
+ const manage=document.getElementById('admin');
+ manage.classList.toggle('hidden',(data.is_admin!==true&&data.is_teacher!==true)||demo);
+ manage.textContent=data.is_admin===true?'Gestionar alumnos y mensualidades →':'Activar gestión de alumnos →';
 }
 async function start(){
  if(IS_DEMO){const sample=calendar.map((m,i)=>({...m,granted:i<2,drive_ready:i===0}));notice.textContent='VISTA DE DEMOSTRACIÓN. Los meses y permisos que aparecen son ficticios. Ningún enlace real de Drive está habilitado.';notice.classList.add('demo');render({months:sample},true);return;}
