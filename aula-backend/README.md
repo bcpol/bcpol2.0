@@ -10,11 +10,11 @@ Aula independiente con un único botón en la página principal y acceso **por m
 - `aula-backend/001_aula_virtual.sql`: esquema privado + API server-only + auditoría de cambios mensuales.
 - `aula-backend/index.ts`: Edge Function separada `bcpol-aula` con verificación de las sesiones de BCPOL.
 
-## Estado verificado (3 de noviembre de 2026)
+## Estado verificado (4 de noviembre de 2026)
 - Migración aplicada en el proyecto Supabase de BCPOL, **sin alterar** usuarios, contraseñas, sesiones existentes ni tablas de BCPOL TRAINING.
 - Edge Function independiente `bcpol-aula` desplegada; `bcpol-web-auth` existente intacta.
 - 12 mensualidades creadas; **28 correos identificados, 83 derechos mensuales autorizados (28 SEP, 28 OCT, 27 NOV), 9 clases registradas**.
-- Compartición real en Drive **pendiente**: 0 derechos verificados y 0 clases publicadas.
+- Se han confirmado por Google Apps Script **180 de los 251 permisos directos históricos** de clase, de acuerdo con el usuario, antes de detener el plan anterior. En Supabase aún hay 0 meses marcados `drive_verified` y 0 clases publicadas. Los permisos de las 3 nuevas carpetas mensuales siguen pendientes.
 - Hay una excepción confirmada: Rafa dispone de septiembre y octubre, pero NO de noviembre.
 - El administrador `bcpol` **no está habilitado** en `bcpol_private.aula_admins`. Ningún otro usuario puede administrar.
 - Consulta de prueba sobre 8 sesiones vigentes: todas recibieron una vista válida de 12 meses y todas fueron rechazadas para `admin_snapshot`.
@@ -26,7 +26,7 @@ Aula independiente con un único botón en la página principal y acceso **por m
 3. Habilitar manualmente un administrador verificado en `bcpol_private.aula_admins` **solo después de completar la rotación**, nunca desde el navegador. Exigir identidad robusta para cambios económicos.
 4. Lista de 28 alumnos y pagos de septiembre a noviembre confirmada por el preparador y registrada. Los siguientes meses todavía no están confirmados. No se debe inferir el pago de ningún mes posterior.
 5. Revisar carpetas heredadas, accesos «cualquiera con enlace» y permisos de `Nube Clases BCPOL`: **ocultar el enlace no impide entrar**.
-6. Las 9 carpetas semanales existentes han sido localizadas y catalogadas sin moverlas. Conceder permisos **solo sobre las 9 carpetas semanales** (251 permisos lector: 112 SEP, 112 OCT, 27 NOV) y verificar cada permiso antes de marcar `drive_verified` y publicar enlaces. Se ha preparado un script privado de Apps Script, no incluido en el repositorio público porque contiene correos personales.
+6. **Reorganización realizada:** creadas las carpetas `SEPTIEMBRE 2026`, `OCTUBRE 2026` y `NOVIEMBRE 2026` directamente bajo `0. CLASES BCPOL 2026`, y trasladadas respectivamente las clases 1-4, 5-8 y 9; los nueve ID de clase y sus enlaces se han conservado. El plan nuevo es conceder 28/28/27 permisos **solo sobre cada carpeta mensual** (83 permisos); las clases futuras heredarán su mes. El script anterior que presupone que las clases son hijas directas de la raíz **ya no debe ejecutarse**. Se ha preparado un script mensual privado que verifica de nuevo los 9 elementos y los archivos antes de escribir. Hay que comprobar heredados y cuentas no autorizadas.
 7. El preparador confirma que `11. SUPUESTO SEMANAL` **ya tiene acceso limitado** por su sistema actual; conservar sus permisos y no modificar esa carpeta. Este control es independiente de las nueve carpetas históricas del Aula Virtual. Antes de publicar, comprobar únicamente que ninguna autorización heredada de las carpetas históricas anule la restricción mensual.
 8. Probar desde navegador móvil y escritorio con alumnos con 0, 1, 2 o más meses concedidos; intentar abrir un mes no abonado mediante URL guardada y confirmar que Google Drive lo impide.
 9. Revisar cambios y hacer una copia de la rama `main` antes de integrar. Publicar solo tras aprobación del preparador.
@@ -43,9 +43,9 @@ Aula independiente con un único botón en la página principal y acceso **por m
 
 ## Preparación de permisos de Drive (4 de noviembre de 2026)
 - Comprobada la estructura de 9 carpetas de clase (4 septiembre, 4 octubre, 1 noviembre), que incluyen 59 documentos PDF.
-- Preparado localmente **BCPOL_Configurar_Permisos_Drive_9_Clases_2026_V2.gs** para compartir las carpetas con 28 alumnos en septiembre/octubre y 27 en noviembre, 251 asignaciones previstas. El código con correos de alumnos permanece fuera de este repositorio público.
-- Probado en simulación: 251 permisos lector, ausencia de duplicados, exclusión de Rafa en noviembre, detección de accesos públicos y auditoría de 59 archivos. **No se han aplicado permisos reales todavía**.
-- La versión V2 exige auditoría de documentos reciente (24 horas) antes de compartir, verifica propietarios/editores autorizados y funciona por lotes de 30 sin correos de notificación.
+- El preparador ejecutó el script original de 251 permisos y confirmó 180 permisos directos de clase mediante su registro. Se interrumpió para pasar a permisos mensuales. Las tres carpetas de mes y sus contenidos se crearon y verificaron el 4 de noviembre. El nuevo plan necesita 83 permisos de lector sobre las tres carpetas mensuales, pendiente de ejecución; el código con correos permanece fuera del repositorio público.
+- El nuevo script mensual se validó localmente (sintaxis y plan de 28/28/27 alumnos). Los 180 accesos directos históricos quedan intactos y deben auditarse para evitar autorizaciones indebidas al reorganizar.
+- La nueva versión mensual exige auditoría de documentos reciente (24 horas), valida propietarios/editores y trabaja por lotes de 30 sobre 83 permisos nuevos, sin enviar notificaciones. Requiere sustituir el código antiguo en Apps Script; está bloqueada para escritura de forma predeterminada.
 - La carpeta `11. SUPUESTO SEMANAL` está limitada según confirmación del preparador y queda fuera del alcance; **no modificar** sus permisos.
 
 ## Pruebas aún pendientes
