@@ -14,7 +14,9 @@ Aula independiente con un único botón en la página principal y acceso **por m
 - Migración aplicada en el proyecto Supabase de BCPOL, **sin alterar** usuarios, contraseñas, sesiones existentes ni tablas de BCPOL TRAINING.
 - Edge Function independiente `bcpol-aula` desplegada; `bcpol-web-auth` existente intacta.
 - 12 mensualidades creadas; **28 correos identificados, 83 derechos mensuales autorizados (28 SEP, 28 OCT, 27 NOV), 9 clases registradas**.
-- Se han confirmado por Google Apps Script **180 de los 251 permisos directos históricos** de clase, de acuerdo con el usuario, antes de detener el plan anterior. En Supabase aún hay 0 meses marcados `drive_verified` y 0 clases publicadas. Los permisos de las 3 nuevas carpetas mensuales siguen pendientes.
+- Google Drive devuelve los permisos mensuales correctos: 28 lectores en septiembre, 28 en octubre, 27 en noviembre; Rafa está en septiembre/octubre y no en noviembre; sin accesos `anyone` ni de dominio. Confirmación del 4 de noviembre.
+- Supabase refleja **83 accesos mensuales `granted=true,drive_verified=true`** y **9 clases `published=true`**. El sitio público todavía no incluía el botón hasta la integración de esta rama.
+- El usuario informó de 180 permisos directos anteriores en carpetas de clase, que se conservan. No es necesario volver a compartir clases una por una.
 - Hay una excepción confirmada: Rafa dispone de septiembre y octubre, pero NO de noviembre.
 - El administrador `bcpol` **no está habilitado** en `bcpol_private.aula_admins`. Ningún otro usuario puede administrar.
 - Consulta de prueba sobre 8 sesiones vigentes: todas recibieron una vista válida de 12 meses y todas fueron rechazadas para `admin_snapshot`.
@@ -43,9 +45,9 @@ Aula independiente con un único botón en la página principal y acceso **por m
 
 ## Preparación de permisos de Drive (4 de noviembre de 2026)
 - Comprobada la estructura de 9 carpetas de clase (4 septiembre, 4 octubre, 1 noviembre), que incluyen 59 documentos PDF.
-- El preparador ejecutó el script original de 251 permisos y confirmó 180 permisos directos de clase mediante su registro. Se interrumpió para pasar a permisos mensuales. Las tres carpetas de mes y sus contenidos se crearon y verificaron el 4 de noviembre. El nuevo plan necesita 83 permisos de lector sobre las tres carpetas mensuales, pendiente de ejecución; el código con correos permanece fuera del repositorio público.
-- El nuevo script mensual se validó localmente (sintaxis y plan de 28/28/27 alumnos). Los 180 accesos directos históricos quedan intactos y deben auditarse para evitar autorizaciones indebidas al reorganizar.
-- La nueva versión mensual exige auditoría de documentos reciente (24 horas), valida propietarios/editores y trabaja por lotes de 30 sobre 83 permisos nuevos, sin enviar notificaciones. Requiere sustituir el código antiguo en Apps Script; está bloqueada para escritura de forma predeterminada.
+- El script mensual se ejecutó y verificó mediante capturas aportadas por el preparador: `total=83, existentes=83, faltantes=0`. La API conectada a Google Drive confirmó además los lectores por carpeta y la exclusión de Rafa en noviembre. Los correos personales y el script privado no se publican en este repositorio.
+- Los 180 accesos directos históricos permanecen sin alteración. Los permisos del nivel mensual se han confirmado. Mantener la política de no compartir la carpeta general y controlar el material semanal por mes.
+- La versión mensual ha completado la configuración; volver a dejar `ACTIVAR_COMPARTICION = false` para evitar modificaciones accidentales. Para crear clases del mes basta con añadir la carpeta bajo la mensualidad correspondiente.
 - La carpeta `11. SUPUESTO SEMANAL` está limitada según confirmación del preparador y queda fuera del alcance; **no modificar** sus permisos.
 
 ## Pruebas aún pendientes
