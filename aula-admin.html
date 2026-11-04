@@ -4,6 +4,16 @@
 </style></head><body><header><div class="wrap top"><a class="logo" href="aula.html"><img src="LOGO BC POL CUADRADO PNG.png" alt="BCPOL"><span>BCPOL · GESTIÓN DE AULA</span></a><a class="back" href="aula.html">← Aula virtual</a></div></header>
 <main class="wrap"><section class="intro"><h1>Administración de mensualidades</h1><p>Gestiona el acceso individual de los alumnos. No modifica las contraseñas de la web ni concede automáticamente permisos en Google Drive.</p></section>
 <div id="status" class="notice" role="status">Comprobando acceso del administrador…</div>
+<section id="loginPanel" class="card hidden" aria-label="Iniciar sesión de preparador" style="max-width:540px;margin-bottom:20px">
+ <h2>Acceder como preparador</h2>
+ <p>Para proteger el panel, inicia sesión aquí con la contraseña de tu usuario <strong>bcpol</strong>. No necesitas volver a la página principal.</p>
+ <form id="adminLoginForm" autocomplete="on">
+  <div class="field"><label for="adminLoginUser">Usuario</label><input id="adminLoginUser" type="text" value="bcpol" autocomplete="username" readonly></div>
+  <div class="field"><label for="adminLoginPassword">Contraseña actual de bcpol</label><input id="adminLoginPassword" type="password" autocomplete="current-password" required></div>
+  <button id="adminLoginBtn" type="submit" class="btn">Entrar al panel</button>
+ </form>
+ <p class="hint">La sesión solo queda activa en esta pestaña. Nunca compartas tu contraseña por chat.</p>
+</section>
 <section id="setup" class="card hidden" aria-label="Activación segura">
  <h2>Activar gestión de BCPOL</h2>
  <p>Para proteger los datos de los alumnos, cambia primero la contraseña de <strong>bcpol</strong>. No cambia ninguna contraseña de los alumnos.</p>
@@ -30,6 +40,7 @@
 <script>
 'use strict';
 const API='https://axgbiqbyserypsbtwnjr.supabase.co/functions/v1/bcpol-aula',KEY='bcpol_session_v2';
+const AUTH_API='https://axgbiqbyserypsbtwnjr.supabase.co/functions/v1/bcpol-web-auth';
 const statusEl=document.getElementById('status'),panel=document.getElementById('panel');
 const months=['Septiembre 2026','Octubre 2026','Noviembre 2026','Diciembre 2026','Enero 2027','Febrero 2027','Marzo 2027','Abril 2027','Mayo 2027','Junio 2027','Julio 2027','Agosto 2027'];
 const ids=months.map((_,i)=>(i<4?'2026-':'2027-')+String(i<4?i+9:i-3).padStart(2,'0'));
@@ -76,6 +87,46 @@ $('setupForm').addEventListener('submit',async event=>{
   btn.disabled=false;
  }
 });
-if(!sessionStorage.getItem(KEY))message('Inicia sesión en la web principal de BCPOL y vuelve a esta página.',true);
-else boot().catch(e=>{message(e.message,true);panel.classList.add('hidden');$('setup').classList.add('hidden');});
+function requireLogin(text){
+ panel.classList.add('hidden');
+ $('setup').classList.add('hidden');
+ $('loginPanel').classList.remove('hidden');
+ message(text||'Accede con el usuario bcpol para continuar.',false);
+}
+async function startAdmin(){
+ if(!sessionStorage.getItem(KEY)){requireLogin('Inicia sesión como bcpol directamente en este panel.');return;}
+ try{await boot();$('loginPanel').classList.add('hidden');}
+ catch(e){
+  if(/sesión|acceso|inicia sesión|autorizad/i.test(String(e.message))){
+   sessionStorage.removeItem(KEY);
+   requireLogin('Introduce tu contraseña de bcpol para acceder al panel.');
+  }else{message(e.message,true);}
+ }
+}
+$('adminLoginForm').addEventListener('submit',async event=>{
+ event.preventDefault();
+ const btn=$('adminLoginBtn'),password=$('adminLoginPassword').value;
+ btn.disabled=true;
+ message('Verificando el acceso de bcpol…');
+ try{
+  const res=await fetch(AUTH_API,{
+   method:'POST',mode:'cors',credentials:'omit',cache:'no-store',referrerPolicy:'no-referrer',
+   headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({action:'login',username:'bcpol',password})
+  });
+  const data=await res.json().catch(()=>({}));
+  if(!res.ok||data.ok===false||typeof data.token!=='string')throw Error(data.error||'Contraseña incorrecta o acceso no disponible.');
+  sessionStorage.setItem(KEY,data.token);
+  $('adminLoginPassword').value='';
+  await boot();
+  $('loginPanel').classList.add('hidden');
+ }catch(e){
+  if(sessionStorage.getItem(KEY))sessionStorage.removeItem(KEY);
+  requireLogin(e.message||'No se ha podido comprobar la sesión.');
+ }finally{
+  $('adminLoginPassword').value='';
+  btn.disabled=false;
+ }
+});
+startAdmin();
 </script></body></html>
