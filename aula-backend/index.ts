@@ -4,7 +4,7 @@ const origins = new Set(["https://bcpol.es","https://www.bcpol.es","https://bcpo
 const url = Deno.env.get("SUPABASE_URL")?.replace(/\/+$/,"") || "";
 // New Supabase secret key is preferred; legacy service role remains fallback for this existing project.
 const key = Deno.env.get("SUPABASE_SECRET_KEY") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-const allowed = new Set(["mine","admin_snapshot","set_email","set_access","save_class"]);
+const allowed = new Set(["mine","admin_snapshot","set_email","set_access","save_class","activate_admin"]);
 function responseHeaders(origin: string | null): Headers {
  const h=new Headers({"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store","Pragma":"no-cache","X-Content-Type-Options":"nosniff","Vary":"Origin"});
  if(origin && origins.has(origin)){
@@ -42,7 +42,19 @@ Deno.serve(async (req:Request)=>{
   if(!body||typeof body!=="object"||Array.isArray(body)||!allowed.has(body.action))return reply({ok:false,error:"Acción no válida"},400,origin);
   if(typeof body.token!=="string"||!/^[A-Za-z0-9_-]{43}$/.test(body.token))return reply({ok:false,error:"Necesitas iniciar sesión"},401,origin);
   const {token,action,...payload}=body;
-  const data=await api(await sha256(token),action,payload);
+  let safePayload:Record<string,unknown>=payload;
+  if(action==="activate_admin"){
+   const current=payload.current_password, fresh=payload.new_password, code=payload.activation_code;
+   if(typeof current!=="string" || current.length<1 || current.length>256 ||
+      typeof fresh!=="string" || fresh.length<16 || fresh.length>128 ||
+      !/[a-z]/.test(fresh) || !/[A-Z]/.test(fresh) ||
+      !/[0-9]/.test(fresh) || !/[^A-Za-z0-9]/.test(fresh) ||
+      fresh===current || typeof code!=="string" || !/^[a-f0-9]{48}$/.test(code)){
+    return reply({ok:false,error:"Comprueba la contraseña nueva (16 caracteres, mayúscula, minúscula, número y símbolo) y el código"},400,origin);
+   }
+   safePayload={current_password_sha:await sha256(current),new_password_sha:await sha256(fresh),activation_code:code};
+  }
+  const data=await api(await sha256(token),action,safePayload);
   if(data.ok!==true){
    const error=typeof data.error==="string"?data.error:"Acceso no autorizado";
    const status=error.includes("Sesión")?401:403;
