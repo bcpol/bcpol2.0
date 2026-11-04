@@ -4,6 +4,18 @@
 </style></head><body><header><div class="wrap top"><a class="logo" href="aula.html"><img src="LOGO BC POL CUADRADO PNG.png" alt="BCPOL"><span>BCPOL · GESTIÓN DE AULA</span></a><a class="back" href="aula.html">← Aula virtual</a></div></header>
 <main class="wrap"><section class="intro"><h1>Administración de mensualidades</h1><p>Gestiona el acceso individual de los alumnos. No modifica las contraseñas de la web ni concede automáticamente permisos en Google Drive.</p></section>
 <div id="status" class="notice" role="status">Comprobando acceso del administrador…</div>
+<section id="setup" class="card hidden" aria-label="Activación segura">
+ <h2>Activar gestión de BCPOL</h2>
+ <p>Para proteger los datos de los alumnos, cambia primero la contraseña de <strong>bcpol</strong>. No cambia ninguna contraseña de los alumnos.</p>
+ <p class="notice">Necesitas tu contraseña actual y el código de activación guardado en <a id="setupCodeLink" href="#" rel="noopener noreferrer" target="_blank">tu documento privado de Google Drive</a>. Nunca envíes esas claves por chat.</p>
+ <form id="setupForm" autocomplete="off">
+  <div class="field"><label for="oldPassword">Contraseña actual de bcpol</label><input id="oldPassword" type="password" autocomplete="current-password" required></div>
+  <div class="field"><label for="newPassword">Nueva contraseña</label><input id="newPassword" type="password" autocomplete="new-password" minlength="16" maxlength="128" required><p class="hint">Mínimo 16 caracteres, con mayúsculas, minúsculas, números y un símbolo.</p></div>
+  <div class="field"><label for="confirmPassword">Repetir nueva contraseña</label><input id="confirmPassword" type="password" autocomplete="new-password" minlength="16" required></div>
+  <div class="field"><label for="setupCode">Código privado de activación</label><input id="setupCode" type="password" autocomplete="off" minlength="48" maxlength="48" required></div>
+  <button id="activateBtn" class="btn" type="submit">Cambiar contraseña y activar panel</button>
+ </form><p class="hint">La activación cierra todas las sesiones actuales de bcpol. Después deberás iniciar sesión con la nueva contraseña.</p>
+</section>
 <div id="panel" class="layout hidden">
 <section class="card"><h2>1. Datos del alumno</h2><div class="field"><label for="student">Usuario BCPOL</label><select id="student"></select></div><div class="field"><label for="email">Correo de Google Drive</label><input id="email" type="email" placeholder="alumno@gmail.com" autocomplete="off"></div><div class="actions"><button id="saveEmail" class="btn">Guardar correo</button><span class="hint">El alumno debe autorizarse en Drive por separado.</span></div></section>
 <section class="card"><h2>2. Acceso por mensualidad</h2><div class="field"><label for="month">Mensualidad</label><select id="month"></select></div><div class="checkrow"><label><input id="paid" type="checkbox"> Mes abonado</label><label><input id="drive" type="checkbox"> Permisos Drive verificados</label></div><div class="actions"><button id="saveAccess" class="btn">Guardar acceso</button></div><p class="hint">Un mes abonado se conserva indefinidamente. Si el alumno causa baja, no desmarques meses anteriores. «Drive verificado» se marca solo tras confirmar que el correo tiene permiso para la carpeta correspondiente.</p></section>
@@ -30,7 +42,35 @@ async function save(action,payload){try{message('Guardando…');await api(action
 fillSelect('month',ids.map((id,i)=>({value:id,label:months[i]})));fillSelect('classMonth',ids.map((id,i)=>({value:id,label:months[i]})));
 $('student').addEventListener('change',updateView);$('month').addEventListener('change',refreshChecks);$('paid').addEventListener('change',()=>{if(!$('paid').checked)$('drive').checked=false;});
 $('saveEmail').addEventListener('click',()=>{const s=current();if(!s)return;save('set_email',{username:s.username,google_email:$('email').value.trim()});});
-$('saveAccess').addEventListener('click',()=>{const s=current();if(!s)return;const paid=$('paid').checked,ready=$('drive').checked;if(ready&&!paid){message('No se puede verificar Drive sin mensualidad abonada.',true);return;}save('set_access',{username:s.username,month_id:$('month').value,granted:paid,drive_verified:ready});});
+$('saveAccess').addEventListener('click',()=>{const s=current();if(!s)return;const paid=$('paid').checked,ready=$('drive').checked;if(ready&&!paid){message('No se puede verificar Drive sin mensualidad abonada.',true);return;}const previous=(s.access||[]).find(x=>x.month_id===$('month').value);
+ if(previous?.granted===true && !paid && !confirm('Este alumno ya tenía esta mensualidad. Solo desmarca un mes si fue un error de registro. ¿Continuar?'))return;
+ if(ready && previous?.drive_verified!==true && !confirm('¿Has comprobado que el correo del alumno tiene acceso REAL en la carpeta del mes de Google Drive? Marcar esta casilla no concede permisos.'))return;
+ save('set_access',{username:s.username,month_id:$('month').value,granted:paid,drive_verified:ready});});
 $('saveClass').addEventListener('click',()=>{const n=Number($('classNum').value),title=$('classTitle').value.trim(),url=$('classLink').value.trim();if(!Number.isInteger(n)||n<1||n>70||!title){message('Indica número y título de clase válidos.',true);return;}save('save_class',{month_id:$('classMonth').value,lesson_number:n,title,drive_url:url,published:$('published').checked});});
-if(!sessionStorage.getItem(KEY))message('Inicia sesión en la web principal de BCPOL y vuelve a esta página.',true);else reload().catch(e=>{message('Panel no habilitado: '+e.message,true);panel.classList.add('hidden')});
+async function boot(){
+ const identity=await api('mine');
+ if(identity.is_teacher!==true)throw Error('Este panel solo está disponible para el preparador.');
+ if(identity.is_admin===true){await reload();return;}
+ $('setup').classList.remove('hidden');
+ message('La gestión está protegida: activa tu cuenta con el código privado.');
+}
+$('setupForm').addEventListener('submit',async event=>{
+ event.preventDefault();
+ const oldPass=$('oldPassword').value,newPass=$('newPassword').value,confirm=$('confirmPassword').value;
+ const code=$('setupCode').value.trim().toLowerCase();
+ if(newPass!==confirm){message('La nueva contraseña no coincide en ambos campos.',true);return;}
+ const btn=$('activateBtn');btn.disabled=true;
+ try{
+  await api('activate_admin',{current_password:oldPass,new_password:newPass,activation_code:code});
+  sessionStorage.removeItem(KEY);
+  $('setup').classList.add('hidden');
+  message('Cuenta protegida y panel activado. Se han cerrado las sesiones antiguas de bcpol. Inicia sesión otra vez con la contraseña nueva en la web principal.');
+ }catch(e){message(e.message,true);}
+ finally{
+  for(const id of ['oldPassword','newPassword','confirmPassword','setupCode'])$(id).value='';
+  btn.disabled=false;
+ }
+});
+if(!sessionStorage.getItem(KEY))message('Inicia sesión en la web principal de BCPOL y vuelve a esta página.',true);
+else boot().catch(e=>{message(e.message,true);panel.classList.add('hidden');$('setup').classList.add('hidden');});
 </script></body></html>
