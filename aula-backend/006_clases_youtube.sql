@@ -1,18 +1,16 @@
--- Add optional per-class YouTube link. Existing 9 lessons and their permissions remain unchanged.
+-- Optional YouTube video link for each class, preserving existing student entitlements.
 alter table bcpol_private.aula_classes add column if not exists youtube_url text;
 do $$
 begin
  if not exists(select 1 from pg_constraint
                where conrelid='bcpol_private.aula_classes'::regclass
-                 and conname='aula_classes_youtube_url_safe') then
-   alter table bcpol_private.aula_classes
+               and conname='aula_classes_youtube_url_safe') then
+    alter table bcpol_private.aula_classes
       add constraint aula_classes_youtube_url_safe
       check(youtube_url is null or
             youtube_url ~ '^https://www[.]youtube[.]com/watch[?]v=[A-Za-z0-9_-]{11}$');
  end if;
 end $$;
-
--- Retain all prior authentication, month entitlements, and teacher-only management.
 create or replace function public.bcpol_aula_api(
  p_token_hash text, p_action text, p_payload jsonb default '{}'::jsonb
 ) returns jsonb
@@ -197,15 +195,8 @@ begin
    v_number:=(p_payload->>'lesson_number')::integer;
    v_youtube:=trim(coalesce(p_payload->>'youtube_url',''));
    if length(v_youtube)>200 or (
-        v_youtube<>'' and
-        v_youtube !~ '^https://www[.]youtube[.]com/watch[?]v=[A-Za-z0-9_-]{11}
-exception when others then
- return jsonb_build_object('ok',false,'error','Operación no disponible');
-end
-$func$;
-
-revoke all on function public.bcpol_aula_api(text,text,jsonb) from public,anon,authenticated;
-grant execute on function public.bcpol_aula_api(text,text,jsonb) to service_role;
+       v_youtube<>'' and
+       v_youtube !~ '^https://www[.]youtube[.]com/watch[?]v=[A-Za-z0-9_-]{11}$'
       ) or not exists(
         select 1 from bcpol_private.aula_classes c
         where c.month_id=v_month and c.lesson_number=v_number
@@ -213,8 +204,8 @@ grant execute on function public.bcpol_aula_api(text,text,jsonb) to service_role
      return jsonb_build_object('ok',false,'error','Selecciona una clase existente y un enlace válido de YouTube');
    end if;
    update bcpol_private.aula_classes
-   set youtube_url=nullif(v_youtube,''),updated_at=now(),updated_by=v_user
-   where month_id=v_month and lesson_number=v_number;
+      set youtube_url=nullif(v_youtube,''),updated_at=now(),updated_by=v_user
+      where month_id=v_month and lesson_number=v_number;
    return jsonb_build_object('ok',true);
  end if;
  return jsonb_build_object('ok',false,'error','Acción desconocida');
