@@ -46,11 +46,11 @@ Deno.serve(async (req:Request)=>{
   if(action==="activate_admin"){
    const current=payload.current_password, fresh=payload.new_password, code=payload.activation_code;
    if(typeof current!=="string" || current.length<1 || current.length>256 ||
-      typeof fresh!=="string" || fresh.length<16 || fresh.length>128 ||
+      typeof fresh!=="string" || fresh.length<8 || fresh.length>128 ||
       !/[a-z]/.test(fresh) || !/[A-Z]/.test(fresh) ||
       !/[0-9]/.test(fresh) || !/[^A-Za-z0-9]/.test(fresh) ||
       fresh===current || typeof code!=="string" || !/^[a-f0-9]{48}$/.test(code)){
-    return reply({ok:false,error:"Comprueba la contraseña nueva (16 caracteres, mayúscula, minúscula, número y símbolo) y el código"},400,origin);
+    return reply({ok:false,error:"Comprueba la contraseña nueva (8 caracteres, mayúscula, minúscula, número y símbolo) y el código"},400,origin);
    }
    safePayload={current_password_sha:await sha256(current),new_password_sha:await sha256(fresh),activation_code:code};
   }

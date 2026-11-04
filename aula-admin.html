@@ -25,8 +25,8 @@
  </div>
  <form id="setupForm" autocomplete="off">
   <div class="field"><label for="oldPassword">Contraseña actual de bcpol</label><input id="oldPassword" type="password" autocomplete="current-password" required></div>
-  <div class="field"><label for="newPassword">Nueva contraseña</label><input id="newPassword" type="password" autocomplete="new-password" minlength="16" maxlength="128" required><p class="hint">Mínimo 16 caracteres, con mayúsculas, minúsculas, números y un símbolo.</p></div>
-  <div class="field"><label for="confirmPassword">Repetir nueva contraseña</label><input id="confirmPassword" type="password" autocomplete="new-password" minlength="16" required></div>
+  <div class="field"><label for="newPassword">Nueva contraseña</label><input id="newPassword" type="password" autocomplete="new-password" minlength="8" maxlength="128" required><p class="hint">Mínimo 8 caracteres, con mayúsculas, minúsculas, números y un símbolo.</p></div>
+  <div class="field"><label for="confirmPassword">Repetir nueva contraseña</label><input id="confirmPassword" type="password" autocomplete="new-password" minlength="8" required></div>
   <div class="field"><label for="setupCode">Código privado de activación</label><input id="setupCode" type="password" autocomplete="off" minlength="48" maxlength="48" required></div>
   <button id="activateBtn" class="btn" type="submit">Cambiar contraseña y activar panel</button>
  </form><p class="hint">La activación cierra todas las sesiones actuales de bcpol. Después deberás iniciar sesión con la nueva contraseña.</p>
