@@ -35,7 +35,13 @@
 <section class="card"><h2>1. Datos del alumno</h2><div class="field"><label for="student">Usuario BCPOL</label><select id="student"></select></div><div class="field"><label for="email">Correo de Google Drive</label><input id="email" type="email" placeholder="alumno@gmail.com" autocomplete="off"></div><div class="actions"><button id="saveEmail" class="btn">Guardar correo</button><span class="hint">El alumno debe autorizarse en Drive por separado.</span></div></section>
 <section class="card"><h2>2. Acceso por mensualidad</h2><div class="field"><label for="month">Mensualidad</label><select id="month"></select></div><div class="checkrow"><label><input id="paid" type="checkbox"> Mes abonado</label><label><input id="drive" type="checkbox"> Permisos Drive verificados</label></div><div class="actions"><button id="saveAccess" class="btn">Guardar acceso</button></div><p class="hint">Un mes abonado se conserva indefinidamente. Si el alumno causa baja, no desmarques meses anteriores. «Drive verificado» se marca solo tras confirmar que el correo tiene permiso para la carpeta correspondiente.</p></section>
 <section class="card full"><h2>3. Registrar una clase</h2><div class="layout"><div class="field"><label for="classMonth">Mes</label><select id="classMonth"></select></div><div class="field"><label for="classNum">Número de clase</label><input id="classNum" type="number" min="1" max="70" placeholder="Ej. 9"></div></div><div class="field"><label for="classTitle">Título de la clase</label><input id="classTitle" type="text" placeholder="Clase 9 · Mixto"></div><div class="field"><label for="classLink">Carpeta de Google Drive</label><input id="classLink" type="url" placeholder="https://drive.google.com/drive/folders/…"></div><div class="checkrow"><label><input type="checkbox" id="published"> Publicar clase (solo con los permisos correctamente configurados)</label></div><button id="saveClass" class="btn">Guardar clase</button><p class="hint">Las carpetas no se publican por defecto. Se recomienda una carpeta independiente por mensualidad, sin heredar permisos de una carpeta general compartida.</p></section>
-<section class="card full"><h2>4. Relación de alumnos</h2><div class="tablewrap"><table class="tbl"><thead><tr><th>Usuario</th><th>Correo Drive</th><th>Meses abonados</th><th>Carpetas verificadas</th></tr></thead><tbody id="roster"></tbody></table></div></section>
+<section class="card full"><h2>4. Vídeos de YouTube por clase</h2>
+<p class="hint">Selecciona una clase ya registrada y pega el enlace de su grabación. El enlace aparecerá en el Aula Virtual únicamente a los alumnos con acceso a esa mensualidad. No modifica las carpetas ni los pagos.</p>
+<div class="field"><label for="videoClass">Clase</label><select id="videoClass"></select></div>
+<div class="field"><label for="youtubeLink">Enlace del vídeo de YouTube</label><input id="youtubeLink" type="url" maxlength="500" placeholder="https://youtu.be/… o https://www.youtube.com/watch?v=…" autocomplete="off"></div>
+<div class="actions"><button id="saveVideo" class="btn">Guardar enlace de YouTube</button><span class="hint">Deja el campo vacío y guarda para quitar el vídeo. Los vídeos privados requieren permisos de YouTube aparte.</span></div>
+</section>
+<section class="card full"><h2>5. Relación de alumnos</h2><div class="tablewrap"><table class="tbl"><thead><tr><th>Usuario</th><th>Correo Drive</th><th>Meses abonados</th><th>Carpetas verificadas</th></tr></thead><tbody id="roster"></tbody></table></div></section>
 </div></main>
 <script>
 'use strict';
@@ -45,17 +51,58 @@ const statusEl=document.getElementById('status'),panel=document.getElementById('
 const months=['Septiembre 2026','Octubre 2026','Noviembre 2026','Diciembre 2026','Enero 2027','Febrero 2027','Marzo 2027','Abril 2027','Mayo 2027','Junio 2027','Julio 2027','Agosto 2027'];
 const ids=months.map((_,i)=>(i<4?'2026-':'2027-')+String(i<4?i+9:i-3).padStart(2,'0'));
 const $=id=>document.getElementById(id);
-let students=[],loadedMonths=[];
+let students=[],loadedMonths=[],loadedClasses=[];
 function fillSelect(id,arr){const select=$(id);select.replaceChildren();arr.forEach(x=>{const opt=document.createElement('option');opt.value=x.value;opt.textContent=x.label;select.append(opt);});}
 function current(){return students.find(s=>s.username===$('student').value);}
 function updateView(){const s=current();if(!s)return;$('email').value=s.google_email||'';refreshChecks();}
 function refreshChecks(){const s=current(),a=(s?.access||[]).find(x=>x.month_id===$('month').value);$('paid').checked=a?.granted===true;$('drive').checked=a?.drive_verified===true;}
+function refreshVideoField(){
+ const selected=$('videoClass').value;
+ const currentVideo=loadedClasses.find(c=>(c.month_id+'|'+c.lesson_number)===selected);
+ $('youtubeLink').value=currentVideo?.youtube_url||'';
+}
+function refreshVideoChoices(keep){
+ const wanted=keep||$('videoClass').value;
+ fillSelect('videoClass',loadedClasses.map(c=>({
+  value:c.month_id+'|'+c.lesson_number,
+  label:(loadedMonths.find(m=>m.id===c.month_id)?.label||c.month_id)+' · '+c.title+(c.youtube_url?' · ✓ Vídeo':'')
+ })));
+ if(loadedClasses.some(c=>(c.month_id+'|'+c.lesson_number)===wanted))$('videoClass').value=wanted;
+ refreshVideoField();
+}
+function canonicalYouTube(input){
+ const text=input.trim();if(!text)return '';
+ let u;try{u=new URL(text);}catch{throw Error('Introduce un enlace de YouTube válido.');}
+ if(u.protocol!=='https:')throw Error('El enlace debe comenzar por https://.');
+ const host=u.hostname.toLowerCase();let videoId='';
+ if(host==='youtu.be'||host==='www.youtu.be'){
+   const m=u.pathname.match(/^\/([A-Za-z0-9_-]{11})\/?$/);videoId=m?.[1]||'';
+ }else if(['youtube.com','www.youtube.com','m.youtube.com','music.youtube.com'].includes(host)){
+   if(u.pathname==='/watch')videoId=u.searchParams.get('v')||'';
+   else{const m=u.pathname.match(/^\/(?:live|shorts|embed)\/([A-Za-z0-9_-]{11})\/?$/);videoId=m?.[1]||'';}
+ }
+ if(!/^[A-Za-z0-9_-]{11}$/.test(videoId))throw Error('No se reconoce el vídeo. Pega el enlace completo de YouTube.');
+ return 'https://www.youtube.com/watch?v='+videoId;
+}
 function roster(){const body=$('roster');body.replaceChildren();for(const s of students){const tr=document.createElement('tr');const fields=[s.username,s.google_email||'Pendiente',(s.access||[]).filter(x=>x.granted).length,(s.access||[]).filter(x=>x.granted&&x.drive_verified).length];fields.forEach(val=>{const td=document.createElement('td');td.textContent=String(val);tr.append(td)});tr.addEventListener('click',()=>{$('student').value=s.username;updateView();window.scrollTo({top:0,behavior:'smooth'});});body.append(tr);}}
 async function api(action,payload={}){const token=sessionStorage.getItem(KEY);if(!token)throw Error('Inicia sesión primero en bcpol.es.');const res=await fetch(API,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({...payload,action,token})});const data=await res.json().catch(()=>({}));if(!res.ok||!data.ok)throw Error(data.error||'Operación no autorizada.');return data;}
-async function reload(keepUser){const data=await api('admin_snapshot');if(data.is_admin!==true)throw Error('Esta cuenta no dispone de acceso administrativo.');students=Array.isArray(data.students)?data.students:[];loadedMonths=Array.isArray(data.months)?data.months:[];const original=keepUser||$('student').value;fillSelect('student',students.map(s=>({value:s.username,label:s.username})));if(students.some(x=>x.username===original))$('student').value=original;updateView();roster();panel.classList.remove('hidden');statusEl.textContent=students.length+' cuentas cargadas. Control administrativo protegido por el servidor.';}
+async function reload(keepUser){const data=await api('admin_snapshot');if(data.is_admin!==true)throw Error('Esta cuenta no dispone de acceso administrativo.');students=Array.isArray(data.students)?data.students:[];loadedMonths=Array.isArray(data.months)?data.months:[];loadedClasses=Array.isArray(data.classes)?data.classes:[];const original=keepUser||$('student').value;fillSelect('student',students.map(s=>({value:s.username,label:s.username})));if(students.some(x=>x.username===original))$('student').value=original;updateView();refreshVideoChoices();roster();panel.classList.remove('hidden');statusEl.textContent=students.length+' cuentas cargadas. Control administrativo protegido por el servidor.';}
 function message(t,error){statusEl.textContent=t;statusEl.style.color=error?'#9a2744':'#284363';}
 async function save(action,payload){try{message('Guardando…');await api(action,payload);await reload(payload.username);message('Cambios guardados correctamente. Comprueba por separado los permisos reales de Google Drive.');}catch(e){message(e.message,true);}}
 fillSelect('month',ids.map((id,i)=>({value:id,label:months[i]})));fillSelect('classMonth',ids.map((id,i)=>({value:id,label:months[i]})));
+$('videoClass').addEventListener('change',refreshVideoField);
+$('saveVideo').addEventListener('click',async()=>{
+ const chosen=loadedClasses.find(c=>(c.month_id+'|'+c.lesson_number)===$('videoClass').value);
+ if(!chosen){message('Selecciona una clase registrada.',true);return;}
+ let youtubeUrl;try{youtubeUrl=canonicalYouTube($('youtubeLink').value);}catch(e){message(e.message,true);return;}
+ const btn=$('saveVideo');btn.disabled=true;
+ try{
+   message('Guardando enlace del vídeo…');
+   await api('save_video',{month_id:chosen.month_id,lesson_number:chosen.lesson_number,youtube_url:youtubeUrl});
+   await reload();
+   message(youtubeUrl?'Vídeo guardado. Ya aparecerá en el Aula Virtual para los alumnos autorizados.':'Vídeo retirado de la ficha de la clase.');
+ }catch(e){message(e.message,true);}finally{btn.disabled=false;}
+});
 $('student').addEventListener('change',updateView);$('month').addEventListener('change',refreshChecks);$('paid').addEventListener('change',()=>{if(!$('paid').checked)$('drive').checked=false;});
 $('saveEmail').addEventListener('click',()=>{const s=current();if(!s)return;save('set_email',{username:s.username,google_email:$('email').value.trim()});});
 $('saveAccess').addEventListener('click',()=>{const s=current();if(!s)return;const paid=$('paid').checked,ready=$('drive').checked;if(ready&&!paid){message('No se puede verificar Drive sin mensualidad abonada.',true);return;}const previous=(s.access||[]).find(x=>x.month_id===$('month').value);
