@@ -4,7 +4,7 @@ const origins = new Set(["https://bcpol.es","https://www.bcpol.es","https://bcpo
 const url = Deno.env.get("SUPABASE_URL")?.replace(/\/+$/,"") || "";
 // New Supabase secret key is preferred; legacy service role remains fallback for this existing project.
 const key = Deno.env.get("SUPABASE_SECRET_KEY") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-const allowed = new Set(["mine","admin_snapshot","set_email","set_access","save_class","activate_admin"]);
+const allowed = new Set(["mine","admin_snapshot","set_email","set_access","save_class","save_video","activate_admin"]);
 function responseHeaders(origin: string | null): Headers {
  const h=new Headers({"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store","Pragma":"no-cache","X-Content-Type-Options":"nosniff","Vary":"Origin"});
  if(origin && origins.has(origin)){
