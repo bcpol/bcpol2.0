@@ -44,8 +44,8 @@ function render(data,demo=false){
   const isGranted=m.granted===true;if(isGranted)count++;
   const card=make('article','month'+(isGranted?' yes':''));card.append(make('div','top'));
   const inner=make('div','inner');inner.append(make('h3','',String(m.label||m.id)));
-  inner.append(make('span','state',isGranted?'✓ Mes abonado':'🔒 Sin acceso'));
-  inner.append(make('p','',isGranted?(m.drive_ready?'Material de las clases de este mes.':'Mes abonado. Pendiente de verificar el acceso a Drive.'):'Disponible exclusivamente para alumnos que abonaron esta mensualidad.'));
+  inner.append(make('span','state',data.is_teacher===true?'✓ Vista preparador':(isGranted?'✓ Mes abonado':'🔒 Sin acceso')));
+  inner.append(make('p','',data.is_teacher===true?'Material publicado para revisión del preparador.':(isGranted?(m.drive_ready?'Material de las clases de este mes.':'Mes abonado. Pendiente de verificar el acceso a Drive.'):'Disponible exclusivamente para alumnos que abonaron esta mensualidad.')));
   const box=make('div','lessons');
   if(isGranted&&m.drive_ready){
    const classes=Array.isArray(m.classes)?m.classes:[];
@@ -61,7 +61,7 @@ function render(data,demo=false){
   if(isGranted&&!m.drive_ready)box.append(make('div','empty','El enlace de Drive aparecerá cuando se comprueben sus permisos.'));
   inner.append(box);card.append(inner);months.append(card);
  }
- document.getElementById('counter').textContent=count+' mensualidad'+(count===1?'':'es')+' con acceso';
+ document.getElementById('counter').textContent=data.is_teacher===true?count+' meses publicados · Vista del preparador':count+' mensualidad'+(count===1?'':'es')+' con acceso';
  document.getElementById('admin').classList.toggle('hidden',data.is_admin!==true||demo);
 }
 async function start(){
@@ -71,7 +71,7 @@ async function start(){
   const res=await fetch(API,{method:'POST',cache:'no-store',headers:{'content-type':'application/json'},body:JSON.stringify({action:'mine',token})});
   const data=await res.json();
   if(!res.ok||!data.ok)throw new Error('No se ha podido verificar el acceso al aula.');
-  render(data);notice.textContent='Acceso individual verificado. Solo puedes consultar las mensualidades autorizadas.';
+  render(data);notice.textContent=data.is_teacher===true?'Vista del preparador de solo lectura. La gestión de alumnos permanece protegida.':'Acceso individual verificado. Solo puedes consultar las mensualidades autorizadas.';
  }catch(e){render({months:calendar});notice.textContent='El Aula Virtual está en preparación y todavía no se han habilitado los accesos. La web principal sigue funcionando con normalidad.';}
 }
 start();
