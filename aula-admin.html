@@ -7,7 +7,12 @@
 <section id="setup" class="card hidden" aria-label="Activación segura">
  <h2>Activar gestión de BCPOL</h2>
  <p>Para proteger los datos de los alumnos, cambia primero la contraseña de <strong>bcpol</strong>. No cambia ninguna contraseña de los alumnos.</p>
- <p class="notice">Necesitas tu contraseña actual y el código de activación guardado en <a id="setupCodeLink" href="#" rel="noopener noreferrer" target="_blank">tu documento privado de Google Drive</a>. Nunca envíes esas claves por chat.</p>
+ <div class="notice">
+ <p><strong>1.</strong> Abre <a href="https://supabase.com/dashboard/project/axgbiqbyserypsbtwnjr/sql/new" rel="noopener noreferrer" target="_blank">el editor SQL privado de BCPOL en Supabase</a>.</p>
+ <p><strong>2.</strong> Ejecuta la consulta <code id="sqlCommand">select bcpol_private.aula_issue_code();</code> y copia el código que aparezca como resultado.</p>
+ <p><strong>3.</strong> Introduce abajo tu contraseña actual, la nueva y ese código de un solo uso (válido durante 24 horas).</p>
+ <p class="hint">No compartas la contraseña ni el código por chat. Esta consulta solo puede ejecutarse desde el editor privado del proyecto.</p>
+ </div>
  <form id="setupForm" autocomplete="off">
   <div class="field"><label for="oldPassword">Contraseña actual de bcpol</label><input id="oldPassword" type="password" autocomplete="current-password" required></div>
   <div class="field"><label for="newPassword">Nueva contraseña</label><input id="newPassword" type="password" autocomplete="new-password" minlength="16" maxlength="128" required><p class="hint">Mínimo 16 caracteres, con mayúsculas, minúsculas, números y un símbolo.</p></div>
