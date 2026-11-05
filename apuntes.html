@@ -51,14 +51,7 @@ h1{margin:6px 0 10px;font-size:clamp(2rem,4vw,3.1rem);letter-spacing:-.04em}
 .empty{text-align:center;color:var(--muted);padding:30px}
 #status{padding:23px 24px;background:#fff;border:1px solid var(--line);border-radius:16px;color:#425c73}
 #status a{color:#0b69b9;font-weight:800}
-.modal[hidden],[hidden]{display:none!important}
-.modal{position:fixed;inset:0;z-index:2000;background:rgba(2,13,25,.77);display:flex;align-items:center;justify-content:center;padding:16px}
-.modalcontent{width:min(780px,100%);background:white;border-radius:18px;overflow:hidden;box-shadow:0 26px 75px rgba(0,0,0,.3)}
-.modaltop{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:13px 17px}
-.modaltop strong{font-size:.85rem}
-.modal iframe{display:block;width:100%;height:min(75vh,500px);border:0;background:#e6edf4}
-.modalfoot{padding:13px 17px}
-.modalfoot a{color:#145e9e;font-weight:800;font-size:.78rem}
+[hidden]{display:none!important}
 #notice{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:2500;padding:13px 20px;color:#fff;background:#092640;border-radius:12px;box-shadow:0 15px 45px #06182b44;font-size:.82rem}
 footer{text-align:center;padding:30px 15px;color:var(--muted);font-size:.75rem}
 @media(max-width:750px){.top{padding:12px 16px}.back{font-size:.72rem;padding:10px}main{padding:26px 13px 45px}.panel{padding:18px}.item{display:block;padding:15px}.actions{margin-top:13px;justify-content:flex-start}.item h2{font-size:.85rem}.btn{flex:1;min-width:0}.progressnote{line-height:1.5}}
@@ -69,7 +62,7 @@ footer{text-align:center;padding:30px 15px;color:var(--muted);font-size:.75rem}
 <main>
   <span class="eyebrow">Biblioteca digital · Curso 2026/27</span>
   <h1 id="heading">Apuntes BCPOL</h1>
-  <p class="subtitle">Consulta tus apuntes, escucha los podcasts disponibles y marca los temas que ya has estudiado. Tu progreso se guarda en tu cuenta BCPOL.</p>
+  <p class="subtitle">Consulta tus apuntes, escucha los podcasts disponibles y marca los temas que ya has estudiado. Tu progreso se guarda en tu cuenta BCPOL. Los podcasts se abren directamente en Google Drive para una mayor compatibilidad con móviles.</p>
   <nav class="subjects" aria-label="Seleccionar materia">
     <a href="apuntes.html?materia=trafico" data-subject="trafico">🚗 Tráfico</a>
     <a href="apuntes.html?materia=administrativa" data-subject="administrativa">🏛️ Policía Administrativa</a>
@@ -94,13 +87,6 @@ footer{text-align:center;padding:30px 15px;color:var(--muted);font-size:.75rem}
     <div class="list" id="list"></div>
   </section>
 </main>
-<div class="modal" id="audiomodal" role="dialog" aria-modal="true" aria-label="Escuchar podcast" hidden>
-  <div class="modalcontent">
-    <div class="modaltop"><strong id="audiotitle">Podcast BCPOL</strong><button class="btn" id="closeaudio" type="button">✕ Cerrar</button></div>
-    <iframe id="audioframe" title="Reproductor de podcast de Google Drive" allow="autoplay"></iframe>
-    <div class="modalfoot"><a id="audioexternal" target="_blank" rel="noopener noreferrer">Abrir el podcast en Google Drive</a></div>
-  </div>
-</div>
 <div id="notice" role="status" hidden></div>
 <footer>© 2026 BCPOL · Preparación Policía Local Andalucía</footer>
 <script>
@@ -141,15 +127,6 @@ async function toggleMark(item,button){
   catch(e){say(e.message);}
   finally{button.disabled=false;}
 }
-function openAudio(item,url){
-  const match=new URL(url).pathname.match(/^\/file\/d\/([A-Za-z0-9_-]+)\/view/);
-  if(!match){window.open(url,"_blank","noopener,noreferrer");return;}
-  $("audiotitle").textContent="PODCAST · "+item.titulo;
-  $("audioframe").src="https://drive.google.com/file/d/"+match[1]+"/preview";
-  $("audioexternal").href=url;
-  $("audiomodal").hidden=false;
-  $("closeaudio").focus();
-}
 function render(){
   const query=$("search").value.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim(),filter=$("filter").value;
   const found=docs.filter(x=>{
@@ -167,7 +144,7 @@ function render(){
     const buttons=elem("div","actions");
     const pdf=safeDrive(item.pdf_url);
     if(pdf){const a=elem("a","btn pdf","📄 PDF");a.href=pdf;a.target="_blank";a.rel="noopener noreferrer";a.setAttribute("aria-label","Ver PDF de "+item.titulo);buttons.append(a);}
-    if(item.audio_url){const aud=safeDrive(item.audio_url);if(aud){const b=elem("button","btn audio","🎧 Escuchar");b.type="button";b.addEventListener("click",()=>openAudio(item,aud));buttons.append(b);}}
+    if(item.audio_url){const aud=safeDrive(item.audio_url);if(aud){const a=elem("a","btn audio","🎧 Escuchar");a.href=aud;a.target="_blank";a.rel="noopener noreferrer";a.setAttribute("aria-label","Escuchar podcast en Google Drive: "+item.titulo);buttons.append(a);}}
     const mark=elem("button","btn mark",studied?"✓ Estudiado":"○ Marcar visto");
     mark.type="button";mark.setAttribute("aria-pressed",studied?"true":"false");
     mark.setAttribute("aria-label",studied?"Desmarcar como estudiado: "+item.titulo:"Marcar como estudiado: "+item.titulo);
@@ -177,10 +154,6 @@ function render(){
   $("list").replaceChildren(frag);
 }
 $("search").addEventListener("input",render);$("filter").addEventListener("change",render);
-function closeAudio(){$("audiomodal").hidden=true;$("audioframe").removeAttribute("src");}
-$("closeaudio").addEventListener("click",closeAudio);
-$("audiomodal").addEventListener("click",e=>{if(e.target===$("audiomodal"))closeAudio()});
-document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("audiomodal").hidden)closeAudio()});
 async function init(){
  if(!token){error("Para ver los apuntes necesitas iniciar sesión.");return;}
  try{
