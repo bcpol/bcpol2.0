@@ -45,8 +45,6 @@ h1{margin:6px 0 10px;font-size:clamp(2rem,4vw,3.1rem);letter-spacing:-.04em}
 .btn{display:inline-flex;gap:7px;align-items:center;justify-content:center;min-height:39px;border:1px solid #c7dcea;border-radius:10px;padding:9px 12px;background:#f4f9ff;color:#10446f;font-size:.77rem;font-weight:850;cursor:pointer;text-decoration:none;white-space:nowrap}
 .btn:hover{background:#e9f3fe}
 .btn.audio{background:#eaf8ff}
-.btn.test-apunte{background:#eaf0ff;color:#173b80;border-color:#b7caf2}
-.btn.test-apunte:hover,.btn.test-apunte:focus-visible{background:#dce8ff;border-color:#86abea}
 
 .btn.mark{background:#fff;border-color:#bdd0de;min-width:120px}
 .btn.mark[aria-pressed="true"]{color:#126a3c;background:#e2f6e8;border-color:#a6d4b6}
@@ -96,14 +94,6 @@ footer{text-align:center;padding:30px 15px;color:var(--muted);font-size:.75rem}
 (function(){
 "use strict";
 const NAMES={trafico:"TRÁFICO",administrativa:"POLICÍA ADMINISTRATIVA",seguridad:"SEGURIDAD CIUDADANA"};
-// Piloto: enlaces disponibles solo para tres apuntes validados en BCPOL TRAINING.
-// La autorización del alumno se comprueba en Telegram, no en este enlace.
-const TEST_POR_APUNTE={
-  "trafico:9":"apunte_trafico_9",
-  "administrativa:9":"apunte_administrativa_9",
-  "seguridad:95":"apunte_seguridad_95"
-};
-const BOT_TEST_URL="https://t.me/BCPOLTEST_bot?start=";
 const materia=new URLSearchParams(location.search).get("materia")||"trafico";
 const token=sessionStorage.getItem("bcpol_session_v2");
 const endpoint="https://axgbiqbyserypsbtwnjr.supabase.co/functions/v1/bcpol-apuntes";
@@ -156,14 +146,6 @@ function render(){
     const pdf=safeDrive(item.pdf_url);
     if(pdf){const a=elem("a","btn pdf","📄 PDF");a.href=pdf;a.target="_blank";a.rel="noopener noreferrer";a.setAttribute("aria-label","Ver PDF de "+item.titulo);buttons.append(a);}
     if(item.audio_url){const aud=safeDrive(item.audio_url);if(aud){const a=elem("a","btn audio","🎧 Escuchar");a.href=aud;a.target="_blank";a.rel="noopener noreferrer";a.setAttribute("aria-label","Escuchar podcast en Google Drive: "+item.titulo);buttons.append(a);}}
-    const payload=TEST_POR_APUNTE[materia+":"+String(item.tema_id)];
-    if(payload){
-      const test=elem("a","btn test-apunte","🧠 Hacer test");
-      test.href=BOT_TEST_URL+encodeURIComponent(payload);
-      test.target="_blank";test.rel="noopener noreferrer";
-      test.setAttribute("aria-label","Practicar test del apunte en BCPOL TRAINING: "+item.titulo);
-      buttons.append(test);
-    }
     const mark=elem("button","btn mark",studied?"✓ Estudiado":"○ Marcar visto");
     mark.type="button";mark.setAttribute("aria-pressed",studied?"true":"false");
     mark.setAttribute("aria-label",studied?"Desmarcar como estudiado: "+item.titulo:"Marcar como estudiado: "+item.titulo);
