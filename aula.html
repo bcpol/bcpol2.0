@@ -14,6 +14,12 @@ main{padding:30px 0 70px}.toolbar{display:flex;align-items:center;justify-conten
 .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.month{background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 8px 23px rgba(2,27,54,.05)}.month .top{height:7px;background:#bfc8d3}.month.yes .top{background:var(--green)}.month .inner{padding:20px}.month h3{font-size:1.05rem;margin:0 0 9px;letter-spacing:.01em}.state{display:inline-block;border-radius:99px;font-size:.72rem;font-weight:850;padding:6px 10px;color:#596579;background:#f0f3f6}.month.yes .state{color:#076847;background:#e7f8f0}
 .month p{font-size:.82rem;line-height:1.5;color:var(--muted);min-height:40px}.lessons{margin-top:15px;display:grid;gap:9px}.lesson{display:flex;justify-content:space-between;align-items:center;gap:9px;background:#f5f8fb;border:1px solid #e8eef4;padding:10px 12px;border-radius:9px;font-size:.8rem;text-decoration:none;color:#0b3c68;font-weight:750}.lesson:hover{border-color:#86bcef}.lesson .arrow{color:var(--blue)}
 .lesson-row{padding:12px;border:1px solid #e5ecf4;border-radius:11px;background:#f7fafd}
+.lesson-row.latest-upcoming{padding:11px;background:#fff7df;border:2px solid #d5aa4d;box-shadow:0 6px 18px rgba(150,113,31,.12)}
+.lesson-row.latest-ready{padding:11px;background:#edfaf4;border:2px solid #5cba94;box-shadow:0 5px 16px rgba(22,129,92,.08)}
+.lesson-row.latest-upcoming .lesson-title,.lesson-row.latest-ready .lesson-title{font-size:.89rem}
+.lesson-status{display:inline-flex;align-items:center;margin-bottom:10px;padding:5px 10px;border-radius:99px;font-size:.69rem;font-weight:900;letter-spacing:.055em}
+.lesson-status.upcoming{background:#f1d48a;color:#624513}
+.lesson-status.ready{background:#d3f0e2;color:#136341}
 .lesson-title{font-size:.82rem;font-weight:850;color:#15354f;margin-bottom:10px;line-height:1.35}
 .lesson-links{display:flex;gap:7px;flex-wrap:wrap}
 .lesson-action{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:37px;padding:8px 12px;border:1px solid #bcd7ee;border-radius:9px;text-decoration:none;color:#115d99;background:#eaf4ff;font-size:.78rem;font-weight:800}
@@ -46,6 +52,22 @@ function safeYouTubeUrl(input){try{const u=new URL(input);return u.protocol==='h
 function render(data,demo=false){
  const months=document.getElementById('months');months.replaceChildren();
  const list=(Array.isArray(data.months)?data.months:calendar).filter(m=>m.granted===true);
+ // Se identifican automáticamente la próxima clase y la última clase con grabación.
+ // Solo se evalúan las clases realmente visibles para este alumno.
+ const visible=[];
+ for(const m of list){
+  if(m.drive_ready!==true)continue;
+  for(const lesson of (Array.isArray(m.classes)?m.classes:[])){
+   const hasVideo=!!safeYouTubeUrl(lesson.youtube_url);
+   if(safeFolderUrl(lesson.drive_url)||hasVideo)visible.push({monthId:String(m.id||''),lesson,hasVideo});
+  }
+ }
+ const newest=visible.length?visible[visible.length-1]:null;
+ const recorded=visible.filter(item=>item.hasVideo);
+ const lastRecorded=recorded.length?recorded[recorded.length-1].lesson:null;
+ const now=new Date();
+ const currentMonth=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+ const nextLesson=newest&&!newest.hasVideo&&newest.monthId>=currentMonth?newest.lesson:null;
  let count=0;
  if(!list.length)months.append(make('p','empty','Todavía no tienes mensualidades verificadas para esta aula.'));
  for(const m of list){
@@ -61,7 +83,11 @@ function render(data,demo=false){
     const drive=safeFolderUrl(lesson.drive_url);
     const video=safeYouTubeUrl(lesson.youtube_url);
     if(!drive&&!video)continue;
-    const row=make('div','lesson-row');
+    const isUpcoming=lesson===nextLesson,isLatestReady=lesson===lastRecorded;
+    const row=make('div','lesson-row'+(isUpcoming?' latest-upcoming':isLatestReady?' latest-ready':''));
+    if(isUpcoming||isLatestReady){
+     row.append(make('span','lesson-status '+(isUpcoming?'upcoming':'ready'),isUpcoming?'PRÓXIMA CLASE':'CLASE SUBIDA'));
+    }
     row.append(make('div','lesson-title',String(lesson.title||'Clase')));
     const links=make('div','lesson-links');
     if(drive){const a=make('a','lesson-action','📁 Materiales');a.href=drive;a.target='_blank';a.rel='noopener noreferrer';a.setAttribute('aria-label','Abrir materiales de '+String(lesson.title||'la clase'));links.append(a);}
