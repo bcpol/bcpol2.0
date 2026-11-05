@@ -1,0 +1,50 @@
+name: BCPOL test por apunte web - staging
+on:
+  push:
+    branches:
+      - test-por-apunte-staging-20261105
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validar-botones:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extraer JavaScript embebido
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from html.parser import HTMLParser
+          class InlineScripts(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.inside = False
+                  self.parts = []
+              def handle_starttag(self, tag, attrs):
+                  if tag == 'script' and not dict(attrs).get('src'):
+                      self.inside = True
+                      self.parts.append('')
+              def handle_data(self, data):
+                  if self.inside:
+                      self.parts[-1] += data
+              def handle_endtag(self, tag):
+                  if tag == 'script':
+                      self.inside = False
+          s=Path('apuntes.html').read_text(encoding='utf-8')
+          p=InlineScripts()
+          p.feed(s)
+          for i,part in enumerate(p.parts):
+              Path(f'/tmp/bcpol-apuntes-{i}.js').write_text(part,encoding='utf-8')
+          assert 'const token=sessionStorage.getItem("bcpol_session_v2")' in s
+          assert 'if(!token){error(' in s
+          for payload in ['apunte_trafico_9','apunte_administrativa_9','apunte_seguridad_95']:
+              assert payload in s
+          assert 'const quiz=quizUrl(item);' in s
+          assert 'rel="noopener noreferrer"' in s or 'a.rel="noopener noreferrer"' in s
+          print('Correspondencias, sesión y enlaces revisados')
+          PY
+      - name: Validar sintaxis JavaScript
+        run: for file in /tmp/bcpol-apuntes-*.js; do node --check "$file"; done
