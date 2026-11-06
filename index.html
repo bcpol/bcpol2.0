@@ -482,8 +482,25 @@ footer{margin-top:70px;background:var(--navy);color:#b9cada}.footer-inner{width:
 @media(max-width:600px){#comunidad .premium-feature-grid{grid-template-columns:1fr}}
 .bcpol-logout{background:transparent;color:#dce9f6;border:1px solid rgba(255,255,255,.28);border-radius:10px;padding:9px 12px;font-weight:700;cursor:pointer}.bcpol-logout:hover{background:rgba(25,127,229,.18)}#loginMessage{font-size:.83rem;color:#b8293d;min-height:1.2rem;margin:10px 0 0}#login button:disabled{opacity:.65;cursor:wait}
 </style>
+<style id="bcpol-supuesto-10-popup-style">
+#bcpol-supuesto-popup[hidden]{display:none!important}
+#bcpol-supuesto-popup{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(5,20,40,.72)}
+#bcpol-supuesto-popup .bcpol-popup-card{box-sizing:border-box;width:min(100%,440px);padding:34px 28px;background:#fff;border-radius:22px;border-top:5px solid #197fe5;box-shadow:0 24px 70px rgba(0,0,0,.3);text-align:center}
+#bcpol-supuesto-popup .bcpol-popup-label{color:#197fe5;font-size:.78rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+#bcpol-supuesto-popup h2{margin:16px 0 25px;color:#102b4a;font-size:1.6rem;line-height:1.3}
+#bcpol-supuesto-popup button{border:0;border-radius:12px;background:#197fe5;color:#fff;font-size:1rem;font-weight:700;padding:14px 27px;cursor:pointer}
+#bcpol-supuesto-popup button:hover{background:#1069c5}
+#bcpol-supuesto-popup button:focus-visible{outline:3px solid #72aff1;outline-offset:3px}
+</style>
 </head>
 <body class="no-access">
+<div id="bcpol-supuesto-popup" role="dialog" aria-modal="true" aria-labelledby="bcpol-supuesto-popup-title" hidden>
+  <div class="bcpol-popup-card">
+    <div class="bcpol-popup-label">Novedades BCPOL</div>
+    <h2 id="bcpol-supuesto-popup-title">Supuesto 10 ya disponible para su realización</h2>
+    <button type="button" onclick="closeBCPOLSupuestoPopup()">Entendido</button>
+  </div>
+</div>
 <div id="login"><div class="logo-login"><img src="LOGO BC POL CUADRADO PNG.png" alt="BCPOL Logo"></div><h2>Acceso restringido</h2><p>Acceso exclusivo para <strong>miembros de BCPOL</strong>. Introduce tus credenciales.</p><div class="input-icon"><input type="text" id="user" placeholder="Usuario" autocomplete="username"><svg class="icon" viewBox="0 0 24 24"><path fill="#888" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><div class="input-icon"><input type="password" id="pass" placeholder="Contraseña" autocomplete="current-password"><svg class="icon" viewBox="0 0 24 24"><path fill="#888" d="M12 17a2 2 0 0 0 2-2v-3a2 2 0 0 0-4 0v3a2 2 0 0 0 2 2zm6-7h-1V7a5 5 0 0 0-10 0v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2zm-7-3a3 3 0 0 1 6 0v3h-6V7z"/></svg></div><button onclick="checkPass()">Entrar en BCPOL</button><p id="loginMessage" role="alert" aria-live="polite"></p></div>
 <div id="app-header"><div class="header-inner"><a class="brand" href="#inicio"><img src="LOGO BC POL CUADRADO PNG.png" alt="BCPOL"><div class="brand-copy"><strong>BCPOL</strong><span>PREPARACIÓN POLICÍA LOCAL · ANDALUCÍA</span></div></a><button class="menu-btn" onclick="toggleMenu()" aria-label="Abrir menú">☰</button><nav id="nav"><ul><li><a href="#inicio">Inicio</a></li><li><a href="#apuntes">Apuntes</a></li><li><a href="#enlaces">Enlaces</a></li><li><a href="#documentos">Documentos</a></li><li><a href="#nubeclases">Drive</a></li><li><a href="#calendario">Calendario</a></li><li><a href="#convocatorias">Convocatorias</a></li><li><a href="#comunidad">Comunidad</a></li></ul></nav><button class="bcpol-logout" type="button" onclick="logoutBCPOL()">Salir</button></div></div>
 <div id="app-main">
@@ -548,6 +565,23 @@ async function bcpolAuth(payload) {
   if (!res.ok || !body.ok) throw new Error(body.error || 'No ha sido posible verificar el acceso.');
   return body;
 }
+function showBCPOLSupuestoPopup() {
+  const popup = document.getElementById('bcpol-supuesto-popup');
+  popup.hidden = false;
+  popup.querySelector('button').focus();
+}
+function closeBCPOLSupuestoPopup() {
+  document.getElementById('bcpol-supuesto-popup').hidden = true;
+}
+document.addEventListener('keydown', function (event) {
+  const popup = document.getElementById('bcpol-supuesto-popup');
+  if (!popup || popup.hidden) return;
+  if (event.key === 'Escape') closeBCPOLSupuestoPopup();
+  if (event.key === 'Tab') {
+    event.preventDefault();
+    popup.querySelector('button').focus();
+  }
+});
 async function checkPass() {
   const user = document.getElementById('user').value.trim();
   const pass = document.getElementById('pass').value;
@@ -562,6 +596,7 @@ async function checkPass() {
     document.getElementById('pass').value = '';
     notice.textContent = '';
     showBCPOL();
+    showBCPOLSupuestoPopup();
   } catch (err) {
     notice.textContent = err.message || 'No se ha podido verificar el acceso.';
   } finally {
@@ -571,6 +606,7 @@ async function checkPass() {
 async function logoutBCPOL() {
   const token = sessionStorage.getItem(BCPOL_SESSION_KEY);
   sessionStorage.removeItem(BCPOL_SESSION_KEY);
+  closeBCPOLSupuestoPopup();
   hideBCPOL();
   document.getElementById('user').value = '';
   document.getElementById('pass').value = '';
