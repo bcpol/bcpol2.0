@@ -10,6 +10,13 @@
       titulo: 'Supuesto 10 de Tráfico disponible',
       descripcion: 'Ya puedes acceder al supuesto para realizarlo.',
       enlace: 'aula.html'
+    },
+    {
+      id: 'podcasts-trafico-ampliados-2026-11-08',
+      tipo: 'PÓDCASTS',
+      titulo: 'Ampliación de los pódcast de Tráfico',
+      descripcion: 'Consulta los audios incorporados a la biblioteca de apuntes.',
+      enlace: 'apuntes.html?materia=trafico'
     }
   ];
   const BASE = 'https://axgbiqbyserypsbtwnjr.supabase.co/functions/v1/';
