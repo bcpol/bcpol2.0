@@ -49,6 +49,11 @@ fieldset{border:0;padding:0;margin:18px 0}legend{font-weight:800;margin:0 0 10px
 .day-task .detail small{display:block;color:var(--muted);font-size:.72rem;margin-top:3px}
 .week-help{font-size:.81rem;color:var(--muted);margin-top:9px}
 @media(max-width:620px){.study-note{display:block}.study-note .links{margin-top:6px}.day-title{align-items:flex-start}}
+
+.day-card.class-day{border:2px solid #197fe5;background:#ecf5ff}
+.day-card.class-day .day-title strong{color:#0c477e}
+.day-card.class-day .day-task{border-top:1px solid #c5ddf7}
+.day-card.class-day .type{color:#0c477e;font-weight:900}
 </style>
 </head>
 <body>
@@ -92,6 +97,7 @@ fieldset{border:0;padding:0;margin:18px 0}legend{font-weight:800;margin:0 0 10px
 <p id="current-week" class="week-head" role="status">Cargando clase activa…</p>
 <div id="case-source"></div>
 <h3>Apuntes prioritarios de la clase</h3>
+<p class="muted">Son los apuntes de referencia del bloque, no tareas adicionales para el día de clase.</p>
 <div class="assigned" id="class-notes"></div>
 <h3>Casuísticas del supuesto sin resolver</h3>
 <div class="case-list" id="cases"></div>
@@ -152,15 +158,15 @@ function buildProgress(data){
  $("progress-percent").textContent=studied+" de "+docs.length+" · "+pct+" % del catálogo";
  $("progress-fill").style.width=pct+"%";
 }
-function dateListInPeriod(start,end){
- const days=selectedDays(),result=[],today=madridYmd(new Date()),last=madridYmd(new Date(Date.parse(end)-1));
- if(!days.length)return result;
+function dateListInPeriod(start,end,classDate){
+ const selected=selectedDays(),result=[],today=madridYmd(new Date()),last=madridYmd(new Date(Date.parse(end)-1));
  const first=new Date(today+"T12:00:00Z");
  for(let i=0;i<9;i++){
   const dt=new Date(first.getTime()+i*86400000),iso=dt.toISOString().slice(0,10),weekday=(dt.getUTCDay()+6)%7;
   if(iso>last)break;
-  if(iso<today||!days.includes(weekday))continue;
-  result.push({iso,weekday});
+  const classDay=Boolean(classDate&&iso===classDate),studyDay=selected.includes(weekday);
+  if(iso<today||(!studyDay&&!classDay))continue;
+  result.push({iso,weekday,classDay,studyDay});
  }
  return result;
 }
@@ -218,8 +224,10 @@ function renderPlan(){
    const score=d=>examScore(d,weights,level)+Math.min(60,age(d)*2);
    return score(b)-score(a);
  });
- const days=dateListInPeriod(null,end),m=mins,total=days.length*m;
- const beforeClass=w&&w.fecha_clase?days.filter(d=>d.iso<w.fecha_clase):[];
+ const days=dateListInPeriod(null,end,w?.fecha_clase||null),m=mins;
+ const studyDays=days.filter(d=>d.studyDay&&!d.classDay),total=studyDays.length*m;
+ const hasClass=days.some(d=>d.classDay);
+ const beforeClass=w&&w.fecha_clase?studyDays.filter(d=>d.iso<w.fecha_clase):[];
  // El supuesto se hace en un solo día: nunca se fracciona aunque haya horas en otros días.
  // 150 minutos ideal; 120 minutos si es necesario ajustar; menos de 120 es lectura rápida, NO resolución.
  const caseDay=w&&beforeClass.length?beforeClass[beforeClass.length-1]:null;
@@ -228,9 +236,10 @@ function renderPlan(){
  const blocks=new Map();
  if(caseDay&&caseMinutes>0)blocks.set(caseDay.iso,caseMinutes);
  const needed=caseMode==="resolver"?(caseMinutes===150?"2 h 30 min de resolución":"2 h de resolución en una sola sesión"):caseMode==="vistazo"?(caseMinutes+" min para lectura y primera revisión; no se considera resuelto"):"pendiente de programar";
- $("week-total").textContent=days.length+" días seleccionados restantes · "+Math.floor(total/60)+" h "+String(total%60).padStart(2,"0")+" min disponibles. "+
+ $("week-total").textContent=studyDays.length+" días de estudio personal restantes · "+Math.floor(total/60)+" h "+String(total%60).padStart(2,"0")+" min de estudio autónomo disponibles. "+
+  (hasClass?"Clase BCPOL: 150 min reservados el "+niceDate(w.fecha_clase+"T12:00:00Z")+". ":"")+
   (w?"Supuesto semanal: "+needed+(caseDay?", el "+niceDate(caseDay.iso+"T12:00:00Z"):"")+". ":"")+
-  "El tiempo restante se destina a los apuntes de la clase, avance autónomo y repasos.";
+  "El resto del tiempo se dedica a los apuntes de la clase, avance autónomo y repasos.";
  if(!days.length){agenda.append(node("p","No tienes días de estudio seleccionados antes de la próxima clase. Ajusta tu disponibilidad.","muted"));return;}
  if(w&&caseMode==="vistazo"){
   agenda.append(node("p","Con menos de 2 horas seguidas no se programa la resolución del supuesto: solo su lectura, comprensión del enunciado y revisión rápida de las casuísticas. Quedará pendiente de resolver.","week-help"));
@@ -258,12 +267,21 @@ function renderPlan(){
  days.forEach((day,i)=>{
   const box=node("div",null,"day-card"),head=node("div",null,"day-title");
   const dateLabel=new Intl.DateTimeFormat("es-ES",{day:"numeric",month:"long",timeZone:"UTC"}).format(new Date(day.iso+"T12:00:00Z"));
-  head.append(node("strong",weekdays[day.weekday]+" "+dateLabel),node("span",m+" minutos disponibles"));box.append(head);
+  head.append(node("strong",weekdays[day.weekday]+" "+dateLabel),node("span",day.classDay?"150 min · Clase BCPOL":m+" minutos disponibles"));box.append(head);
+  if(day.classDay&&w){
+   box.classList.add("class-day");
+   const row=node("div",null,"day-task"),tag=node("span","CLASE","type"),detail=node("div",null,"detail");
+   detail.append(node("strong","CLASE "+w.numero+" · "+(subjectNames[w.bloque]||"Mixto BCPOL")));
+   const time=typeof w.hora_clase==="string"&&/^\d{2}:\d{2}/.test(w.hora_clase)?w.hora_clase.slice(0,5)+" h · ":"";
+   detail.append(node("small",time+"150 min de clase semanal. No se programan apuntes, supuestos ni repasos adicionales."));
+   row.append(tag,detail);box.append(row);agenda.append(box);
+   return;
+  }
   const caseMinutes=blocks.get(day.iso)||0;
   let budget=m-caseMinutes,usedCount=0;
   if(caseMinutes){makeCaseTask(box,caseMinutes);usedCount++;}
   const limit=m<45?1:m<90?2:m<150?3:5;
-  const leftDays=Math.max(1,days.length-i);
+  const leftDays=Math.max(1,studyDays.filter(d=>d.iso>=day.iso).length);
   const classCapacity=Math.max(1,Math.ceil(priority.length/leftDays));
   while(priority.length&&budget>=20&&usedCount<limit&&usedCount<(classCapacity+(caseMinutes?1:0))){
    const doc=priority.shift(),slot=Math.min(45,budget);
