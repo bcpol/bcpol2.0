@@ -5,6 +5,15 @@
   // Avisos de publicación: cambia el identificador cuando publiques otro comunicado.
   const AVISOS = [
     {
+      id: 'planning-estudio-novedad-2026-11-10',
+      tipo: 'NUEVA FUNCIÓN BCPOL',
+      titulo: 'PLANNING DE ESTUDIO',
+      descripcion: '¡Estrenamos una herramienta para organizar tu preparación! Elige tus días y tiempo de estudio, consulta qué apuntes BCPOL trabajar cada día y planifica el supuesto, la clase semanal y los repasos según tu progreso. Entra con tu usuario habitual y configura tu planning.',
+      enlace: 'mi-preparador.html',
+      texto_enlace: 'Abrir mi Planning de Estudio',
+      destacado: true
+    },
+    {
       id: 'supuesto-10-trafico-2026-11-06',
       tipo: 'SUPUESTO PRÁCTICO',
       titulo: 'Supuesto 10 de Tráfico disponible',
@@ -67,15 +76,19 @@
     return (hash >>> 0).toString(36);
   }
   async function consultar(recurso, datos) {
-    const response = await fetch(BASE + recurso, {
-      method: 'POST', mode: 'cors', credentials: 'omit', cache: 'no-store',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(datos)
-    });
-    if (!response.ok) throw new Error('Recurso no disponible');
-    const result = await response.json();
-    if (!result || result.ok !== true) throw new Error('Recurso no autorizado');
-    return result;
+    const abortador = new AbortController();
+    const reloj = setTimeout(function () { abortador.abort(); }, 8500);
+    try {
+      const response = await fetch(BASE + recurso, {
+        method: 'POST', mode: 'cors', credentials: 'omit', cache: 'no-store',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(datos), signal: abortador.signal
+      });
+      if (!response.ok) throw new Error('Recurso no disponible');
+      const result = await response.json();
+      if (!result || result.ok !== true) throw new Error('Recurso no autorizado');
+      return result;
+    } finally { clearTimeout(reloj); }
   }
   function elemento(etiqueta, clase, contenido) {
     const node = document.createElement(etiqueta);
@@ -84,8 +97,8 @@
     return node;
   }
   function enlaceInterno(url) {
-    // Evita enlazar a URLs procedentes de catálogos o contenidos externos.
-    return /^(aula\.html|apuntes\.html\?materia=(trafico|administrativa|seguridad))$/.test(url);
+    // Solo enlaces internos expresamente autorizados, nunca URLs devueltas por catálogos.
+    return /^(mi-preparador\.html|aula\.html|apuntes\.html\?materia=(trafico|administrativa|seguridad))$/.test(url);
   }
   function construirNoticiasApuntes(datos, materia, etiqueta, anterior, existe) {
     const firmas = {};
@@ -141,45 +154,63 @@
     return { firmas: firmas, noticias: noticias };
   }
 
+  let scrollAnterior = '';
+  function ocultar(restaurarFoco) {
+    if (popup) popup.hidden = true;
+    document.body.style.overflow = scrollAnterior;
+    if (restaurarFoco && previoFoco && document.contains(previoFoco)) previoFoco.focus();
+    previoFoco = null;
+  }
   function cerrar() {
     if (pendiente) {
       guardar(pendiente.usuario, pendiente.estado);
       pendiente = null;
     }
-    if (popup) popup.hidden = true;
-    if (previoFoco && document.contains(previoFoco)) previoFoco.focus();
-    previoFoco = null;
+    ocultar(true);
   }
   function cancelar() {
     solicitud++;
     pendiente = null;
-    if (popup) popup.hidden = true;
-    previoFoco = null;
+    ocultar(false);
   }
-  function mostrar(usuario, estado, noticias) {
+  function pintarNoticias(noticias) {
     if (!popup || !listado) return;
     listado.replaceChildren();
-    const maximo = 9;
+    const maximo = 20;
     for (const noticia of noticias.slice(0, maximo)) {
-      const item = elemento('li', 'bcpol-news-item');
+      const destacada = noticia.destacado === true;
+      const item = elemento('li', 'bcpol-news-item' + (destacada ? ' bcpol-news-featured' : ''));
       item.append(elemento('span', 'bcpol-news-type', noticia.tipo));
+      if (destacada) item.append(elemento('span', 'bcpol-news-feature-icon', '📅'));
       item.append(elemento('strong', 'bcpol-news-title', noticia.titulo));
       if (noticia.descripcion) item.append(elemento('p', 'bcpol-news-description', noticia.descripcion));
       if (enlaceInterno(noticia.enlace)) {
-        const a = elemento('a', 'bcpol-news-link', 'Ver contenido');
+        const a = elemento('a', 'bcpol-news-link' + (destacada ? ' bcpol-news-feature-link' : ''), noticia.texto_enlace || 'Ver contenido');
         a.href = noticia.enlace;
         a.addEventListener('click', cerrar);
         item.append(a);
       }
       listado.append(item);
     }
-    resumen.textContent = noticias.length > maximo
-      ? 'Se muestran ' + maximo + ' de ' + noticias.length + ' novedades. Consulta la biblioteca para ver el resto.'
-      : 'Estas son las novedades publicadas desde tu última consulta.';
-    pendiente = { usuario: usuario, estado: estado };
-    previoFoco = document.activeElement;
+    if (noticias.length > maximo) {
+      listado.append(elemento('li', 'bcpol-news-more',
+        'Además, ' + (noticias.length - maximo) + ' actualizaciones más. Consulta los apartados de apuntes y Aula Virtual para verlas.'));
+    }
+    if (resumen) resumen.textContent = noticias.length > 1
+      ? 'Novedades publicadas desde tu última consulta. Se guardarán como vistas al cerrar este aviso.'
+      : 'Esta novedad se mostrará una vez por navegador y usuario.';
+  }
+  function mostrar(usuario, estado, noticias, actual) {
+    if (!popup || !listado || !noticias.length) return;
+    if (popup.hidden) {
+      previoFoco = document.activeElement;
+      scrollAnterior = document.body.style.overflow;
+    }
+    pendiente = { usuario: usuario, estado: estado, noticias: noticias, solicitud: actual };
+    pintarNoticias(noticias);
     popup.hidden = false;
-    const boton = popup.querySelector('button');
+    document.body.style.overflow = 'hidden';
+    const boton = popup.querySelector('.bcpol-popup-accept');
     if (boton) boton.focus();
   }
   async function revisar(usuario, token) {
@@ -190,13 +221,15 @@
       avisos: previo.avisos.slice(),
       catalogos: Object.assign({}, previo.catalogos)
     };
-    const noticias = [];
+    const novedadesDirectas = [];
     for (const aviso of AVISOS) {
       if (!previo.avisos.includes(aviso.id)) {
-        noticias.push(aviso);
+        novedadesDirectas.push(aviso);
         siguiente.avisos.push(aviso.id);
       }
     }
+    // El nuevo Planning aparece sin esperar cuatro consultas externas.
+    if (novedadesDirectas.length) mostrar(usuario, siguiente, novedadesDirectas, actual);
     const tareas = MATERIAS.map(async function (par) {
       const materia = par[0], etiqueta = par[1];
       const datos = await consultar('bcpol-apuntes', { action: 'list', materia: materia, token: token });
@@ -211,15 +244,25 @@
         construirNoticiasAula(datos, anterior || {}, !!anterior));
     })());
     const resultados = await Promise.allSettled(tareas);
-    if (actual !== solicitud || !sessionStorage.getItem('bcpol_session_v2')) return;
+    if (actual !== solicitud || sessionStorage.getItem('bcpol_session_v2') !== token) return;
+    const novedadesCatalogos = [];
+    let consultasCorrectas = 0;
     for (const resultado of resultados) {
       if (resultado.status !== 'fulfilled') continue;
+      consultasCorrectas++;
       const valor = resultado.value;
       siguiente.catalogos[valor.grupo] = valor.firmas;
-      noticias.push.apply(noticias, valor.noticias);
+      novedadesCatalogos.push.apply(novedadesCatalogos, valor.noticias);
     }
-    if (noticias.length) mostrar(usuario, siguiente, noticias);
-    else guardar(usuario, siguiente);
+    if (pendiente && pendiente.solicitud === actual && !popup.hidden) {
+      // Si la ventana sigue abierta, añadimos las novedades y actualizamos su estado.
+      pendiente.noticias.push.apply(pendiente.noticias, novedadesCatalogos);
+      pintarNoticias(pendiente.noticias);
+    } else if (!novedadesDirectas.length) {
+      if (novedadesCatalogos.length) mostrar(usuario, siguiente, novedadesCatalogos, actual);
+      else if (consultasCorrectas) guardar(usuario, siguiente);
+    }
+    // Si el aviso se cerró durante la consulta, no damos por vistas las novedades tardías.
   }
 
   if (popup) {
