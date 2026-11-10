@@ -220,24 +220,22 @@ function renderPlan(){
  });
  const days=dateListInPeriod(null,end),m=mins,total=days.length*m;
  const beforeClass=w&&w.fecha_clase?days.filter(d=>d.iso<w.fecha_clase):[];
- const possible=beforeClass.length*m;
- // 150 minutos si queda margen para los apuntes; si no, mínimo 120 minutos.
- const readingAllowance=Math.min(90,Math.max(30,core.filter(d=>!marks.has(keyDoc(d))).length*20));
- const target=!w?0:possible>=150+readingAllowance?150:possible>=120?120:possible;
+ // El supuesto se hace en un solo día: nunca se fracciona aunque haya horas en otros días.
+ // 150 minutos ideal; 120 minutos si es necesario ajustar; menos de 120 es lectura rápida, NO resolución.
+ const caseDay=w&&beforeClass.length?beforeClass[beforeClass.length-1]:null;
+ const caseMinutes=!caseDay?0:m>=150?150:m>=120?120:Math.min(m,45);
+ const caseMode=!caseDay?"none":m>=120?"resolver":"vistazo";
  const blocks=new Map();
- let remainingCase=target;
- for(const day of [...beforeClass].reverse()){
-  if(remainingCase<=0)break;
-  const time=Math.min(m,remainingCase);
-  if(time>0){blocks.set(day.iso,time);remainingCase-=time;}
- }
- const needed=target>=150?"2 h 30 min":target>=120?"2 h (versión ajustada)":target>0?target+" min (tiempo insuficiente)":"pendiente de programar";
+ if(caseDay&&caseMinutes>0)blocks.set(caseDay.iso,caseMinutes);
+ const needed=caseMode==="resolver"?(caseMinutes===150?"2 h 30 min de resolución":"2 h de resolución en una sola sesión"):caseMode==="vistazo"?(caseMinutes+" min para lectura y primera revisión; no se considera resuelto"):"pendiente de programar";
  $("week-total").textContent=days.length+" días seleccionados restantes · "+Math.floor(total/60)+" h "+String(total%60).padStart(2,"0")+" min disponibles. "+
-  (w?"Supuesto semanal: "+needed+", antes del "+niceDate(w.fecha_clase+"T12:00:00Z")+". ":"")+
+  (w?"Supuesto semanal: "+needed+(caseDay?", el "+niceDate(caseDay.iso+"T12:00:00Z"):"")+". ":"")+
   "El tiempo restante se destina a los apuntes de la clase, avance autónomo y repasos.";
  if(!days.length){agenda.append(node("p","No tienes días de estudio seleccionados antes de la próxima clase. Ajusta tu disponibilidad.","muted"));return;}
- if(w&&target<120){
-  agenda.append(node("p","AVISO: Con los días y horas disponibles antes de esta clase no caben las 2 horas mínimas del supuesto. Reserva una sesión adicional para completarlo.","week-help"));
+ if(w&&caseMode==="vistazo"){
+  agenda.append(node("p","Con menos de 2 horas seguidas no se programa la resolución del supuesto: solo su lectura, comprensión del enunciado y revisión rápida de las casuísticas. Quedará pendiente de resolver.","week-help"));
+ }else if(w&&caseMode==="none"){
+  agenda.append(node("p","No hay un día de estudio seleccionado antes de la clase para trabajar el supuesto. Ajusta tu disponibilidad si quieres incluirlo.","week-help"));
  }
  const priority=[...core],supplement=[...extra],rev=[...reviews],autonomy=[...pending];
  const makeTask=(container,type,d,comment,minutes)=>{
@@ -248,8 +246,11 @@ function renderPlan(){
   row.append(tag,detail,links);container.append(row);
  };
  const makeCaseTask=(container,minutes)=>{
-  const row=node("div",null,"day-task"),tag=node("span","SUPUESTO","type other"),detail=node("div",null,"detail"),links=node("div",null,"links");
-  detail.append(node("strong","Resolver el supuesto "+w.numero+" SIN RESOLVER"),node("small",minutes+" min · Resolución práctica individual antes de la clase"));
+  const row=node("div",null,"day-task"),short=caseMode==="vistazo",tag=node("span",short?"LECTURA":"SUPUESTO","type other"),detail=node("div",null,"detail"),links=node("div",null,"links");
+  detail.append(
+   node("strong",(short?"Leer y revisar por encima":"Resolver de una sola vez")+" el supuesto "+w.numero+" SIN RESOLVER"),
+   node("small",minutes+" min · "+(short?"Lectura orientativa; supuesto pendiente de resolver":"Una única sesión de resolución individual antes de la clase"))
+  );
   const url=safeDriveUrl(w.enlace_sup_sin_resolver);
   if(url){const a=node("a","Abrir supuesto","note-link");a.href=url;a.target="_blank";a.rel="noopener noreferrer";links.append(a);}
   row.append(tag,detail,links);container.append(row);
