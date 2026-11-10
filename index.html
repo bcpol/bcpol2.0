@@ -500,6 +500,23 @@ footer{margin-top:70px;background:var(--navy);color:#b9cada}.footer-inner{width:
 #bcpol-novedades-popup .bcpol-news-title{color:#102b4a;font-size:.95rem;line-height:1.3}
 #bcpol-novedades-popup .bcpol-news-description{margin:0;color:#587087;font-size:.8rem;line-height:1.4}
 #bcpol-novedades-popup .bcpol-news-link{font-size:.82rem;color:#086bc6;font-weight:800}
+/* BCPOL: lanzamiento destacado, respetando el resto de avisos de alumnos */
+#bcpol-novedades-popup .bcpol-news-featured{position:relative;padding:20px 19px;background:linear-gradient(135deg,#fff5d4 0%,#ffe3a3 100%);border:2px solid #edc36e;box-shadow:0 9px 23px rgba(143,103,31,.13);gap:9px}
+#bcpol-novedades-popup .bcpol-news-featured .bcpol-news-type{color:#755009;font-size:.68rem;letter-spacing:.11em}
+#bcpol-novedades-popup .bcpol-news-feature-icon{font-size:1.7rem;line-height:1}
+#bcpol-novedades-popup .bcpol-news-featured .bcpol-news-title{font-size:1.37rem;font-weight:950;line-height:1.2;color:#0b2d4c;letter-spacing:.005em}
+#bcpol-novedades-popup .bcpol-news-featured .bcpol-news-description{font-size:.88rem;color:#284059;line-height:1.55}
+#bcpol-novedades-popup .bcpol-news-feature-link{display:flex;align-items:center;justify-content:center;align-self:stretch;background:#0d477b;color:#fff;border-radius:11px;text-decoration:none;padding:13px 15px;font-weight:900;font-size:.88rem;margin-top:5px;min-height:46px}
+#bcpol-novedades-popup .bcpol-news-feature-link:hover{background:#0a345b}
+#bcpol-novedades-popup .bcpol-news-more{color:#4d637b;border:1px dashed #bdd0df;border-radius:10px;padding:12px;font-size:.82rem;line-height:1.45;background:#f9fcff}
+#bcpol-novedades-popup .bcpol-popup-card{max-height:90dvh;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+#bcpol-novedades-list{max-height:55dvh;overscroll-behavior:contain}
+@media(max-width:600px){
+ #bcpol-novedades-popup{padding:12px}
+ #bcpol-novedades-popup .bcpol-news-featured{padding:17px 15px}
+ #bcpol-novedades-popup .bcpol-news-featured .bcpol-news-title{font-size:1.22rem}
+}
+
 #bcpol-novedades-popup .bcpol-popup-accept{border:0;border-radius:12px;background:#197fe5;color:#fff;font-size:1rem;font-weight:800;padding:13px 26px;cursor:pointer;width:100%;margin-top:14px}
 #bcpol-novedades-popup .bcpol-popup-accept:hover{background:#1069c5}
 #bcpol-novedades-popup :focus-visible{outline:3px solid #72aff1;outline-offset:3px}
@@ -511,10 +528,10 @@ footer{margin-top:70px;background:var(--navy);color:#b9cada}.footer-inner{width:
   <div class="bcpol-popup-card">
     <div class="bcpol-popup-label">BCPOL · ACTUALIZACIONES</div>
     <h2 id="bcpol-novedades-title">Novedades BCPOL</h2>
-    <p class="bcpol-news-intro" id="bcpol-novedades-intro">Consulta el nuevo material que tienes disponible.</p>
+    <p class="bcpol-news-intro" id="bcpol-novedades-intro">Estas son las nuevas herramientas y los materiales incorporados a BCPOL.</p>
     <ul id="bcpol-novedades-list" aria-label="Últimas novedades"></ul>
     <p id="bcpol-novedades-resumen" class="bcpol-news-resumen"></p>
-    <button type="button" class="bcpol-popup-accept" onclick="BCPOLNovedades.cerrar()">Entendido · No volver a mostrar estas novedades</button>
+    <button type="button" class="bcpol-popup-accept" onclick="BCPOLNovedades.cerrar()">Entendido · Marcar estas novedades como vistas</button>
   </div>
 </div>
 <div id="login"><div class="logo-login"><img src="LOGO BC POL CUADRADO PNG.png" alt="BCPOL Logo"></div><h2>Acceso restringido</h2><p>Acceso exclusivo para <strong>miembros de BCPOL</strong>. Introduce tus credenciales.</p><div class="input-icon"><input type="text" id="user" placeholder="Usuario" autocomplete="username"><svg class="icon" viewBox="0 0 24 24"><path fill="#888" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><div class="input-icon"><input type="password" id="pass" placeholder="Contraseña" autocomplete="current-password"><svg class="icon" viewBox="0 0 24 24"><path fill="#888" d="M12 17a2 2 0 0 0 2-2v-3a2 2 0 0 0-4 0v3a2 2 0 0 0 2 2zm6-7h-1V7a5 5 0 0 0-10 0v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2zm-7-3a3 3 0 0 1 6 0v3h-6V7z"/></svg></div><button onclick="checkPass()">Entrar en BCPOL</button><p id="loginMessage" role="alert" aria-live="polite"></p></div>
@@ -554,7 +571,7 @@ footer{margin-top:70px;background:var(--navy);color:#b9cada}.footer-inner{width:
 <section class="section planning-section" id="planificacion"><div class="section-head"><div><div class="kicker">Método BCPOL</div><h2>Planificación del estudio</h2></div><p>Dos propuestas de organización según tu disponibilidad. El objetivo es llegar cada semana con el supuesto trabajado y aprovechar la clase para profundizar en su resolución.</p></div><div class="planning-intro"><div class="planning-highlight"><span>01</span><strong>TIEMPO COMPLETO</strong><small>Para opositores que pueden dedicar la jornada completa al estudio.</small></div><div class="planning-highlight"><span>02</span><strong>TRABAJO + ESTUDIO</strong><small>Para quienes compaginan la oposición con una jornada laboral.</small></div></div><div class="planning-grid"><a class="planning-card" href="planning-tiempo-completo.png" target="_blank" rel="noopener noreferrer"><div class="planning-label">TIEMPO COMPLETO</div><img src="planning-tiempo-completo.png" alt="Planning de estudio BCPOL para opositores a tiempo completo"><div class="planning-card-footer"><strong>Ver planning completo</strong><span>↗</span></div></a><a class="planning-card" href="planning-trabajo-estudio.png" target="_blank" rel="noopener noreferrer"><div class="planning-label">TRABAJO + ESTUDIO</div><img src="planning-trabajo-estudio.png" alt="Planning de estudio BCPOL para opositores que trabajan y estudian"><div class="planning-card-footer"><strong>Ver planning completo</strong><span>↗</span></div></a></div></section>
 <footer><div class="footer-inner"><div class="footer-brand"><img src="LOGO BC POL CUADRADO PNG.png" alt="BCPOL"><div><strong>BCPOL</strong><span>Preparación Policía Local Andalucía</span></div></div><p>© 2026 BCPOL. Todos los derechos reservados.</p></div></footer>
 </div>
-<script src="novedades.js"></script>
+<script src="novedades.js?v=20261110-planning-v2"></script>
 <script>
 
 const BCPOL_AUTH_ENDPOINT = 'https://axgbiqbyserypsbtwnjr.supabase.co/functions/v1/bcpol-web-auth';
