@@ -17,6 +17,13 @@
       titulo: 'Ampliación de los pódcast de Tráfico',
       descripcion: 'Consulta los audios incorporados a la biblioteca de apuntes.',
       enlace: 'apuntes.html?materia=trafico'
+    },
+    {
+      id: 'podcasts-seguridad-seis-2026-11-10',
+      tipo: 'PÓDCASTS',
+      titulo: '6 nuevos pódcast de Seguridad Ciudadana',
+      descripcion: 'Nuevos audios de los temas 104 a 109: defraudaciones, violencia contra transexuales, aborto, piratería audiovisual, insolvencias punibles y delitos contra la salud pública.',
+      enlace: 'apuntes.html?materia=seguridad'
     }
   ];
   const BASE = 'https://axgbiqbyserypsbtwnjr.supabase.co/functions/v1/';
