@@ -97,7 +97,7 @@ fieldset{border:0;padding:0;margin:18px 0}legend{font-weight:800;margin:0 0 10px
 <p id="current-week" class="week-head" role="status">Cargando clase activa…</p>
 <div id="case-source"></div>
 <h3>Apuntes prioritarios de la clase</h3>
-<p class="muted">Son los apuntes de referencia del bloque, no tareas adicionales para el día de clase.</p>
+<p class="muted">Se muestran los PDF incluidos en la carpeta de esta clase. No son tareas adicionales para el día de clase.</p>
 <div class="assigned" id="class-notes"></div>
 <h3>Casuísticas del supuesto sin resolver</h3>
 <div class="case-list" id="cases"></div>
@@ -141,7 +141,7 @@ function madridYmd(date){
 }
 function niceDate(iso){return new Intl.DateTimeFormat("es-ES",{day:"numeric",month:"short",timeZone:"Europe/Madrid"}).format(new Date(iso));}
 function docLink(parent,d,label){
- const u=safeDriveUrl(d.pdf_url);if(!u)return;
+ const u=safeDriveUrl(d.archivo_clase_url)||safeDriveUrl(d.pdf_url);if(!u)return;
  const a=node("a",label||"Abrir apunte","note-link");a.href=u;a.target="_blank";a.rel="noopener noreferrer";parent.append(a);
 }
 function buildProgress(data){
@@ -188,7 +188,7 @@ function renderPlan(){
  let core=[],extra=[],block="mixto",end;
  if(w){
   block=w.bloque;end=w.fin_plan;
-  $("current-week").textContent=w.titulo+" · Clase del "+niceDate((w.fecha_clase||madridYmd(new Date(Date.parse(w.fin_plan)-1)))+"T12:00:00Z")+". El siguiente bloque comienza a las 00:00 del día posterior a la clase.";
+  $("current-week").textContent=(typeof w.titulo==="string"?w.titulo.toUpperCase().replace(/\s*[·–—-]\s*/g," - "):"CLASE "+w.numero+" - "+(subjectNames[w.bloque]||"MIXTO").toUpperCase());
   const url=safeDriveUrl(w.enlace_sup_sin_resolver);
   if(url){const a=node("a","Abrir supuesto de la semana sin resolver","note-link");a.href=url;a.target="_blank";a.rel="noopener noreferrer";source.append(a);}
   (Array.isArray(w.casuisticas)?w.casuisticas:[]).forEach(t=>cases.append(node("span",t,"case")));
@@ -198,13 +198,13 @@ function renderPlan(){
     if(!p||!["trafico","administrativa","seguridad"].includes(p.materia))continue;
     const k=p.materia+":"+p.tema_id,d=map.get(k);
     if(!d||allKeys.has(k))continue;
-    out.push(d);allKeys.add(k);
+    out.push({...d,archivo_clase_url:typeof p.archivo_clase_url==="string"?p.archivo_clase_url:null,titulo_clase:typeof p.titulo_clase==="string"?p.titulo_clase:null});allKeys.add(k);
    }return out;};
   core=pick(w.lecturas);extra=pick(w.ampliaciones);
   core.sort((a,b)=>Number(marks.has(keyDoc(a)))-Number(marks.has(keyDoc(b))));
   for(const d of core){
    const card=node("div",null,"study-note"),info=node("div"),actions=node("div",null,"links");
-   info.append(node("strong",d.titulo),node("small",(subjectNames[d.materia]||d.materia)+" · "+(marks.has(keyDoc(d))?"Ya estudiado: repasar para el supuesto":"Pendiente de estudiar")));
+   info.append(node("strong",d.titulo_clase||d.titulo),node("small",(subjectNames[d.materia]||d.materia)+" · "+(marks.has(keyDoc(d))?"Ya estudiado: repasar para el supuesto":"Pendiente de estudiar")));
    docLink(actions,d,"Ver apunte");
    if(d.audio_url){const au=safeDriveUrl(d.audio_url);if(au){const a=node("a","Escuchar podcast","note-link");a.href=au;a.target="_blank";a.rel="noopener noreferrer";actions.append(a);}}
    card.append(info,actions);root.append(card);
