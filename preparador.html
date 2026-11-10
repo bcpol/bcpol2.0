@@ -225,8 +225,10 @@ function renderPlan(){
    return score(b)-score(a);
  });
  const days=dateListInPeriod(null,end,w?.fecha_clase||null),m=mins;
- const studyDays=days.filter(d=>d.studyDay&&!d.classDay),total=studyDays.length*m;
+ const studyDays=days.filter(d=>d.studyDay&&!d.classDay);
  const hasClass=days.some(d=>d.classDay);
+ const extraClassReview=w&&days.some(d=>d.classDay&&d.studyDay)?Math.max(0,m-150):0;
+ const total=studyDays.length*m+extraClassReview;
  const beforeClass=w&&w.fecha_clase?studyDays.filter(d=>d.iso<w.fecha_clase):[];
  // El supuesto se hace en un solo día: nunca se fracciona aunque haya horas en otros días.
  // 150 minutos ideal; 120 minutos si es necesario ajustar; menos de 120 es lectura rápida, NO resolución.
@@ -236,7 +238,7 @@ function renderPlan(){
  const blocks=new Map();
  if(caseDay&&caseMinutes>0)blocks.set(caseDay.iso,caseMinutes);
  const needed=caseMode==="resolver"?(caseMinutes===150?"2 h 30 min de resolución":"2 h de resolución en una sola sesión"):caseMode==="vistazo"?(caseMinutes+" min para lectura y primera revisión; no se considera resuelto"):"pendiente de programar";
- $("week-total").textContent=studyDays.length+" días de estudio personal restantes · "+Math.floor(total/60)+" h "+String(total%60).padStart(2,"0")+" min de estudio autónomo disponibles. "+
+ $("week-total").textContent=studyDays.length+" días de estudio personal restantes · "+Math.floor(total/60)+" h "+String(total%60).padStart(2,"0")+" min de estudio autónomo disponibles"+(extraClassReview?" (incluye "+extraClassReview+" min adicionales para repaso el día de clase)":"")+". "+
   (hasClass?"Clase BCPOL: 150 min reservados el "+niceDate(w.fecha_clase+"T12:00:00Z")+". ":"")+
   (w?"Supuesto semanal: "+needed+(caseDay?", el "+niceDate(caseDay.iso+"T12:00:00Z"):"")+". ":"")+
   "El resto del tiempo se dedica a los apuntes de la clase, avance autónomo y repasos.";
@@ -247,6 +249,24 @@ function renderPlan(){
   agenda.append(node("p","No hay un día de estudio seleccionado antes de la clase para trabajar el supuesto. Ajusta tu disponibilidad si quieres incluirlo.","week-help"));
  }
  const priority=[...core],supplement=[...extra],rev=[...reviews],autonomy=[...pending];
+ // Se reservan los repasos del día de clase ANTES de asignar los de los demás días.
+ // Si no hay apuntes previamente marcados, solo se revisan conceptos de los apuntes
+ // semanales ya asignados; nunca se introduce materia nueva ese día.
+ const classReviews=[];
+ let classReviewRemaining=extraClassReview;
+ if(classReviewRemaining>=15){
+  const usedReviews=new Set();
+  const candidates=[...rev,...core.filter(d=>marks.has(keyDoc(d))),...extra.filter(d=>marks.has(keyDoc(d))),...core];
+  for(const doc of candidates){
+   const id=keyDoc(doc);
+   if(usedReviews.has(id)||classReviews.length>=3||classReviewRemaining<15)continue;
+   const slot=Math.min(40,classReviewRemaining);
+   classReviews.push({doc,minutes:slot,alreadyStudied:marks.has(id)});
+   classReviewRemaining-=slot;usedReviews.add(id);
+  }
+  const reserved=new Set(classReviews.map(x=>keyDoc(x.doc)));
+  for(let i=rev.length-1;i>=0;i--)if(reserved.has(keyDoc(rev[i])))rev.splice(i,1);
+ }
  const makeTask=(container,type,d,comment,minutes)=>{
   const row=node("div",null,"day-task"),tag=node("span",type,type==="REPASO"?"type review":type==="AMPLIACIÓN"?"type other":"type"),detail=node("div",null,"detail");
   detail.append(node("strong",d.titulo));
@@ -267,14 +287,22 @@ function renderPlan(){
  days.forEach((day,i)=>{
   const box=node("div",null,"day-card"),head=node("div",null,"day-title");
   const dateLabel=new Intl.DateTimeFormat("es-ES",{day:"numeric",month:"long",timeZone:"UTC"}).format(new Date(day.iso+"T12:00:00Z"));
-  head.append(node("strong",weekdays[day.weekday]+" "+dateLabel),node("span",day.classDay?"150 min · Clase BCPOL":m+" minutos disponibles"));box.append(head);
+  head.append(node("strong",weekdays[day.weekday]+" "+dateLabel),node("span",day.classDay?("150 min de clase"+(extraClassReview?" + "+extraClassReview+" min disponibles para repaso":"")):m+" minutos disponibles"));box.append(head);
   if(day.classDay&&w){
    box.classList.add("class-day");
    const row=node("div",null,"day-task"),tag=node("span","CLASE","type"),detail=node("div",null,"detail");
    detail.append(node("strong","CLASE "+w.numero+" · "+(subjectNames[w.bloque]||"Mixto BCPOL")));
    const time=typeof w.hora_clase==="string"&&/^\d{2}:\d{2}/.test(w.hora_clase)?w.hora_clase.slice(0,5)+" h · ":"";
-   detail.append(node("small",time+"150 min de clase semanal. No se programan apuntes, supuestos ni repasos adicionales."));
-   row.append(tag,detail);box.append(row);agenda.append(box);
+   detail.append(node("small",time+"150 min de clase semanal. No se asignan materias nuevas ni supuesto este día."));
+   row.append(tag,detail);box.append(row);
+   if(extraClassReview>=15){
+    classReviews.forEach(({doc,minutes,alreadyStudied})=>
+     makeTask(box,"REPASO",doc,alreadyStudied?"Apunte ya estudiado · prioridad de repaso por frecuencia en exámenes":"Revisión breve del contenido del supuesto semanal",minutes)
+    );
+    const allocated=classReviews.reduce((n,x)=>n+x.minutes,0);
+    if(extraClassReview-allocated>0)box.append(node("p",(extraClassReview-allocated)+" min restantes para repasar dudas después de clase.","week-help"));
+   }
+   agenda.append(box);
    return;
   }
   const caseMinutes=blocks.get(day.iso)||0;
