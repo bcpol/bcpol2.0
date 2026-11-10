@@ -29,6 +29,26 @@ fieldset{border:0;padding:0;margin:18px 0}legend{font-weight:800;margin:0 0 10px
 .note{margin:20px 0 0;padding-top:13px;border-top:1px solid var(--line);font-size:.81rem;color:var(--muted)}
 #status{padding:13px 16px;margin:15px 0;border:1px solid var(--line);background:#fff;border-radius:12px;font-size:.9rem}a{color:#146abd}
 @media(max-width:800px){.two,.fields{grid-template-columns:1fr}.panel{padding:19px}.day{flex:1;min-width:74px}}
+
+/* BCPOL — recomendaciones específicas y planificación por clase */
+.week-head{background:#e9f3ff;color:#0c477e;padding:13px 15px;border:1px solid #c8e2fb;border-radius:12px;font-weight:800;margin:13px 0}
+#plan-panel h3{font-size:1.02rem;margin:24px 0 11px;color:var(--navy)}
+.assigned{display:grid;gap:8px}.study-note{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:#fbfdff;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.study-note strong{display:block;font-size:.88rem}.study-note small{color:var(--muted);font-size:.75rem}
+.study-note .links{display:flex;gap:8px;flex-wrap:wrap;flex-shrink:0}
+.note-link{font-size:.78rem;font-weight:800;color:#146abd;text-decoration:none}
+.note-link:hover{text-decoration:underline}
+.case-list{display:flex;flex-wrap:wrap;gap:7px}.case{background:#fff7d8;border:1px solid #f2dfa4;padding:7px 10px;border-radius:9px;font-size:.81rem;font-weight:650}
+.day-plan{display:grid;gap:10px}.day-card{border:1px solid var(--line);border-radius:14px;padding:14px;background:#fbfdff}
+.day-title{display:flex;justify-content:space-between;gap:10px;margin-bottom:9px;align-items:center}
+.day-title strong{font-size:.92rem}.day-title span{font-size:.76rem;color:var(--muted)}
+.day-task{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid #e6edf4}
+.day-task .type{font-size:.65rem;font-weight:850;letter-spacing:.025em;min-width:68px;color:#0a63ad;padding-top:2px}
+.day-task .type.review{color:#157b54}.day-task .type.other{color:#a07519}
+.day-task .detail{flex:1;min-width:0}.day-task .detail strong{display:block;font-size:.82rem;line-height:1.4}
+.day-task .detail small{display:block;color:var(--muted);font-size:.72rem;margin-top:3px}
+.week-help{font-size:.81rem;color:var(--muted);margin-top:9px}
+@media(max-width:620px){.study-note{display:block}.study-note .links{margin-top:6px}.day-title{align-items:flex-start}}
 </style>
 </head>
 <body>
@@ -66,13 +86,19 @@ fieldset{border:0;padding:0;margin:18px 0}legend{font-weight:800;margin:0 0 10px
 <div id="subjects"></div>
 <p class="note">«Estudiado» no significa «dominado». Los test permitirán medir el dominio cuando terminemos su integración.</p>
 </section></div>
-<section class="panel">
-<h2>3. Distribución inicial de tu estudio</h2>
-<p class="muted">La preparación es continua; no depende de una sola fecha de examen. Esta fase organiza tu tiempo. La recomendación automática de apuntes concretos llegará en la siguiente fase.</p>
-<div class="ratio"><div></div><div></div></div>
-<div class="pills"><span class="pill">60 % · Clase semanal BCPOL</span><span class="pill">40 % · Avance autónomo</span></div>
-<p class="muted" id="week-total"></p><ul class="schedule" id="schedule"></ul>
-<p class="note">Los porcentajes son orientativos. Cuando haya una convocatoria municipal muy próxima se podrá intensificar el repaso sin borrar ni reiniciar el progreso.</p>
+<section class="panel" id="plan-panel">
+<h2>3. Qué apuntes debes estudiar esta semana</h2>
+<p class="muted">Las prioridades se establecen a partir del bloque semanal, los apuntes enviados en clase y las materias del cuadro del supuesto sin resolver. Los repasos siguen el informe estadístico BCPOL.</p>
+<p id="current-week" class="week-head" role="status">Cargando clase activa…</p>
+<div id="case-source"></div>
+<h3>Apuntes prioritarios de la clase</h3>
+<div class="assigned" id="class-notes"></div>
+<h3>Casuísticas del supuesto sin resolver</h3>
+<div class="case-list" id="cases"></div>
+<h3>Tu agenda de estudio hasta la próxima clase</h3>
+<p class="muted" id="week-total">Distribuyendo tus apuntes…</p>
+<div class="day-plan" id="schedule"></div>
+<p class="note">Las fechas cambian al finalizar cada clase, no a medianoche del miércoles. Los porcentajes de frecuencia de exámenes son orientativos, no equivalen a probabilidades por apunte. Un tema marcado como «estudiado» puede seguir requiriendo repaso.</p>
 </section>
 </div>
 </main>
@@ -95,38 +121,141 @@ async function post(endpoint,payload){
     return body;
   }finally{clearTimeout(timeout);}
 }
-function updateSchedule(){
- const ds=selectedDays(),m=Number($("minutes").value),list=$("schedule");
- list.replaceChildren();
- if(!ds.length || !Number.isInteger(m)||m<15||m>480){$("week-total").textContent="Selecciona al menos un día y un tiempo válido.";return;}
- const total=ds.length*m,weekly=Math.round(total*.6),autonomous=total-weekly;
- $("week-total").textContent=ds.length+" días · "+Math.floor(total/60)+" h "+String(total%60).padStart(2,"0")+" min por semana · "+weekly+" min para BCPOL semanal · "+autonomous+" min para avanzar.";
- ds.forEach((d,i)=>{
-   const a=Math.round(m*.6),b=m-a,li=document.createElement("li"),title=document.createElement("strong"),detail=document.createElement("span");
-   title.textContent=weekdays[d];detail.textContent=a+" min de clase/repaso/supuesto · "+b+" min de avance autónomo BCPOL";
-   li.append(title,detail);list.append(li);
- });
+let planData=null;
+const subjectNames=Object.fromEntries(subjects);
+function safeDriveUrl(raw){
+ try{const u=new URL(raw);return u.protocol==="https:"&&u.hostname==="drive.google.com"&&/^\/file\/d\/[A-Za-z0-9_-]+\/view/.test(u.pathname)?u.href:null;}catch(_){return null;}
 }
-async function loadProgress(){
-  const all=await Promise.allSettled(subjects.map(s=>post("bcpol-apuntes",{action:"list",materia:s[0]})));
-  let studied=0,total=0,success=0;const host=$("subjects");host.replaceChildren();
-  all.forEach((v,i)=>{
-    if(v.status!=="fulfilled")return;
-    success++;
-    const docs=Array.isArray(v.value.apuntes)?v.value.apuntes:[];
-    const marked=new Set((Array.isArray(v.value.progreso)?v.value.progreso:[]).map(p=>p.tema_id));
-    const n=docs.filter(x=>marked.has(x.tema_id)).length; studied+=n;total+=docs.length;
-    const row=document.createElement("div");row.className="subject";
-    const title=document.createElement("span");title.textContent=subjects[i][1];
-    const data=document.createElement("strong");data.textContent=n+" / "+docs.length;
-    row.append(title,data);host.append(row);
-  });
-  if(!success){$("progress-status").textContent="No se pudo consultar el progreso";return;}
-  const pct=total?Math.round(100*studied/total):0;
-  $("progress-status").replaceChildren();
-  const pill=document.createElement("span");pill.className="pill";pill.textContent=studied+" apuntes estudiados";$("progress-status").append(pill);
-  $("progress-percent").textContent=studied+" de "+total+" · "+pct+" % del catálogo"+(success<3?" (datos parciales)":"");
-  $("progress-fill").style.width=pct+"%";
+function node(tag,text,cls){const e=document.createElement(tag);if(text!==undefined&&text!==null)e.textContent=String(text);if(cls)e.className=cls;return e;}
+function keyDoc(d){return d.materia+":"+d.tema_id;}
+function madridYmd(date){
+ const parts=new Intl.DateTimeFormat("en-GB",{timeZone:"Europe/Madrid",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(date);
+ const data=Object.fromEntries(parts.map(x=>[x.type,x.value]));
+ return data.year+"-"+data.month+"-"+data.day;
+}
+function niceDate(iso){return new Intl.DateTimeFormat("es-ES",{day:"numeric",month:"short",timeZone:"Europe/Madrid"}).format(new Date(iso));}
+function docLink(parent,d,label){
+ const u=safeDriveUrl(d.pdf_url);if(!u)return;
+ const a=node("a",label||"Abrir apunte","note-link");a.href=u;a.target="_blank";a.rel="noopener noreferrer";parent.append(a);
+}
+function buildProgress(data){
+ const docs=Array.isArray(data.catalogo)?data.catalogo:[];
+ const marks=new Set((data.progreso||[]).map(keyDoc));
+ let studied=0;const host=$("subjects");host.replaceChildren();
+ for(const [code,name] of subjects){
+  const subset=docs.filter(d=>d.materia===code),n=subset.filter(d=>marks.has(keyDoc(d))).length;
+  studied+=n;
+  const row=node("div",null,"subject");row.append(node("span",name),node("strong",n+" / "+subset.length));host.append(row);
+ }
+ const pct=docs.length?Math.round(100*studied/docs.length):0;
+ $("progress-status").replaceChildren(node("span",studied+" apuntes estudiados","pill"));
+ $("progress-percent").textContent=studied+" de "+docs.length+" · "+pct+" % del catálogo";
+ $("progress-fill").style.width=pct+"%";
+}
+function dateListInPeriod(start,end){
+ const days=selectedDays(),result=[],today=madridYmd(new Date()),last=madridYmd(new Date(end));
+ if(!days.length)return result;
+ const first=new Date(today+"T12:00:00Z");
+ for(let i=0;i<9;i++){
+  const dt=new Date(first.getTime()+i*86400000),iso=dt.toISOString().slice(0,10),weekday=(dt.getUTCDay()+6)%7;
+  if(iso>last)break;
+  if(iso<today||!days.includes(weekday))continue;
+  result.push({iso,weekday});
+ }
+ return result;
+}
+function examScore(doc,pesos,nivel){
+ const base=Number(pesos?.[doc.materia]?.[doc.tema_id]||2);
+ const n=Number(doc.tema_id);
+ return base*100+(nivel==="inicio"&&n<=15?12:0)-(Number.isFinite(n)?n/1000:0);
+}
+function renderPlan(){
+ if(!planData)return;
+ const w=planData.semana,docs=Array.isArray(planData.catalogo)?planData.catalogo:[],marks=new Map((planData.progreso||[]).map(p=>[keyDoc(p),p.estudiado_en]));
+ const map=new Map(docs.map(d=>[keyDoc(d),d]));
+ const root=$("class-notes"),cases=$("cases"),source=$("case-source"),agenda=$("schedule");
+ root.replaceChildren();cases.replaceChildren();source.replaceChildren();agenda.replaceChildren();
+ const mins=Number($("minutes").value),level=$("level").value,weights=planData.pesos_orientativos||{};
+ if(!Number.isInteger(mins)||mins<15||mins>480||!selectedDays().length){
+  $("week-total").textContent="Selecciona al menos un día y entre 15 y 480 minutos diarios para generar recomendaciones.";return;
+ }
+ let core=[],extra=[],block="mixto",end;
+ if(w){
+  block=w.bloque;end=w.fin_plan;
+  $("current-week").textContent=w.titulo+" · Preparación hasta el "+niceDate(w.fin_plan)+". Al terminar la clase se activa el siguiente bloque.";
+  const url=safeDriveUrl(w.enlace_sup_sin_resolver);
+  if(url){const a=node("a","Abrir supuesto de la semana sin resolver","note-link");a.href=url;a.target="_blank";a.rel="noopener noreferrer";source.append(a);}
+  (Array.isArray(w.casuisticas)?w.casuisticas:[]).forEach(t=>cases.append(node("span",t,"case")));
+  if(!cases.childElementCount)cases.append(node("p","No hay casuísticas publicadas para esta clase.","muted"));
+  const allKeys=new Set();
+  const pick=(pairs)=>{const out=[];for(const p of pairs||[]){
+    if(!p||!["trafico","administrativa","seguridad"].includes(p.materia))continue;
+    const k=p.materia+":"+p.tema_id,d=map.get(k);
+    if(!d||allKeys.has(k))continue;
+    out.push(d);allKeys.add(k);
+   }return out;};
+  core=pick(w.lecturas);extra=pick(w.ampliaciones);
+  core.sort((a,b)=>Number(marks.has(keyDoc(a)))-Number(marks.has(keyDoc(b))));
+  for(const d of core){
+   const card=node("div",null,"study-note"),info=node("div"),actions=node("div",null,"links");
+   info.append(node("strong",d.titulo),node("small",(subjectNames[d.materia]||d.materia)+" · "+(marks.has(keyDoc(d))?"Ya estudiado: repasar para el supuesto":"Pendiente de estudiar")));
+   docLink(actions,d,"Ver apunte");
+   if(d.audio_url){const au=safeDriveUrl(d.audio_url);if(au){const a=node("a","Escuchar podcast","note-link");a.href=au;a.target="_blank";a.rel="noopener noreferrer";actions.append(a);}}
+   card.append(info,actions);root.append(card);
+  }
+  if(!root.childElementCount)root.append(node("p","Los apuntes de esta clase todavía no están enlazados al catálogo online. Las casuísticas sí están disponibles arriba.","muted"));
+ }else{
+  $("current-week").textContent="La siguiente clase aún no tiene bloque publicado. Mientras tanto, continúa con el avance autónomo y los repasos.";
+  cases.append(node("span","A la espera de la próxima clase BCPOL","case"));
+  end=new Date(Date.now()+7*86400000).toISOString();
+ }
+ const used=new Set([...core,...extra].map(keyDoc));
+ const rank=(a,b)=>examScore(b,weights,level)-examScore(a,weights,level);
+ let pending=docs.filter(d=>!marks.has(keyDoc(d))&&!used.has(keyDoc(d))&&(block==="mixto"||d.materia===block)).sort(rank);
+ if(!pending.length)pending=docs.filter(d=>!marks.has(keyDoc(d))&&!used.has(keyDoc(d))).sort(rank);
+ const reviews=docs.filter(d=>marks.has(keyDoc(d))&&!used.has(keyDoc(d))).sort((a,b)=>{
+   const age=d=>Math.max(0,(Date.now()-Date.parse(marks.get(keyDoc(d))||""))/86400000);
+   const score=d=>examScore(d,weights,level)+Math.min(60,age(d)*2);
+   return score(b)-score(a);
+ });
+ const days=dateListInPeriod(null,end);
+ const m=mins,total=days.length*m;
+ $("week-total").textContent=days.length+" días restantes seleccionados · "+Math.floor(total/60)+" h "+String(total%60).padStart(2,"0")+" min · Apuntes de clase primero, avance del bloque después y repasos por frecuencia de examen.";
+ if(!days.length){agenda.append(node("p","No tienes días de estudio seleccionados antes de la próxima clase. Ajusta tu disponibilidad.","muted"));return;}
+ const priority=[...core],supplement=[...extra],rev=[...reviews],autonomy=[...pending];
+ const makeTask=(container,type,d,comment)=>{
+  const row=node("div",null,"day-task"),tag=node("span",type,type==="REPASO"?"type review":type==="AMPLIACIÓN"?"type other":"type"),detail=node("div",null,"detail");
+  detail.append(node("strong",d.titulo));
+  detail.append(node("small",(subjectNames[d.materia]||d.materia)+(comment?" · "+comment:"")));
+  const links=node("div",null,"links");docLink(links,d,"Abrir PDF");
+  row.append(tag,detail,links);container.append(row);
+ };
+ days.forEach((day,i)=>{
+  const box=node("div",null,"day-card"),head=node("div",null,"day-title");
+  const dateLabel=new Intl.DateTimeFormat("es-ES",{day:"numeric",month:"long",timeZone:"UTC"}).format(new Date(day.iso+"T12:00:00Z"));
+  head.append(node("strong",weekdays[day.weekday]+" "+dateLabel),node("span",m+" minutos disponibles"));box.append(head);
+  const limit=m<45?1:m<90?2:m<150?3:4;
+  const leftDays=days.length-i;
+  const classCapacity=Math.min(limit,Math.max(1,Math.ceil(priority.length/leftDays)));
+  let usedCount=0;
+  while(priority.length&&usedCount<classCapacity){
+    const doc=priority.shift();makeTask(box,marks.has(keyDoc(doc))?"REPASO":"CLASE",doc,"Prioridad del supuesto semanal");usedCount++;
+  }
+  if(usedCount<limit&&supplement.length&&(!priority.length||m>=150)){
+   makeTask(box,"AMPLIACIÓN",supplement.shift(),"Casuística relacionada con la clase");usedCount++;
+  }
+  if(usedCount<limit&&autonomy.length){
+   makeTask(box,"AVANCE",autonomy.shift(),w?"Mismo bloque semanal · prioridad estadística orientativa":"Estudio autónomo BCPOL");usedCount++;
+  }
+  if(usedCount<limit&&rev.length&&m>=60){
+   makeTask(box,"REPASO",rev.shift(),"Contenido estudiado anteriormente · frecuencia en exámenes");usedCount++;
+  }
+  if(!usedCount&&autonomy.length)makeTask(box,"AVANCE",autonomy.shift(),"Siguiente apunte pendiente");
+  if(!usedCount&&!autonomy.length)box.append(node("p","Repaso libre de los apuntes ya estudiados.","week-help"));
+  agenda.append(box);
+ });
+ const leftovers=priority.length;
+ if(leftovers)agenda.append(node("p","Quedan "+leftovers+" apuntes prioritarios sin distribuir por falta de sesiones disponibles. Amplía tu tiempo o continúa con ellos antes del avance autónomo.","week-help"));
 }
 $("profile").addEventListener("submit",async event=>{
  event.preventDefault();const days=selectedDays(),minutes=Number($("minutes").value),level=$("level").value;
@@ -135,24 +264,26 @@ $("profile").addEventListener("submit",async event=>{
  $("save").disabled=true;say("Guardando…",true);
  try{
    await post("bcpol-estudio",{action:"save",dias_estudio:days,minutos_diarios:minutes,nivel:level,fecha_examen:null});
-   say("Tu disponibilidad se ha guardado en tu cuenta BCPOL.",true);
+   say("Tu disponibilidad se ha guardado en tu cuenta BCPOL.",true);renderPlan();
  }catch(err){say(err.message||"Error al guardar",false);}
  finally{$("save").disabled=false;}
 });
-document.querySelectorAll("[data-day],#minutes,#level").forEach(x=>x.addEventListener("change",updateSchedule));
-$("minutes").addEventListener("input",updateSchedule);
+document.querySelectorAll("[data-day],#minutes,#level").forEach(x=>x.addEventListener("change",renderPlan));
+$("minutes").addEventListener("input",renderPlan);
 async function init(){
  if(!token){$("status").textContent="Necesitas iniciar sesión en BCPOL. ";const a=document.createElement("a");a.href="index.html";a.textContent="Ir al acceso";$("status").append(a);return;}
  try{
-  const data=await post("bcpol-estudio",{action:"profile"});
+  const data=await post("bcpol-plan-estudio",{action:"plan"});
+  planData=data;
   if(data.perfil){
-    const p=data.perfil;document.querySelectorAll("[data-day]").forEach(x=>x.checked=Array.isArray(p.dias_estudio)&&p.dias_estudio.includes(Number(x.dataset.day)));
+    const p=data.perfil;
+    document.querySelectorAll("[data-day]").forEach(x=>x.checked=Array.isArray(p.dias_estudio)&&p.dias_estudio.includes(Number(x.dataset.day)));
     $("minutes").value=p.minutos_diarios;
     if(["inicio","intermedio","avanzado"].includes(p.nivel))$("level").value=p.nivel;
   }
-  $("status").hidden=true;$("content").hidden=false;updateSchedule();
-  loadProgress().catch(()=>{$("progress-status").textContent="No disponible temporalmente";});
- }catch(err){$("status").textContent=err.message||"No se pudo comprobar tu acceso";}
+  $("status").hidden=true;$("content").hidden=false;
+  buildProgress(data);renderPlan();
+ }catch(err){$("status").textContent=err.message||"No se pudo consultar tu planificación";}
 }
 init();
 })();
