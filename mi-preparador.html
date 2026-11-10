@@ -38,7 +38,6 @@ fieldset{border:0;padding:0;margin:18px 0}legend{font-weight:800;margin:0 0 10px
 .study-note .links{display:flex;gap:8px;flex-wrap:wrap;flex-shrink:0}
 .note-link{font-size:.78rem;font-weight:800;color:#146abd;text-decoration:none}
 .note-link:hover{text-decoration:underline}
-.case-list{display:flex;flex-wrap:wrap;gap:7px}.case{background:#fff7d8;border:1px solid #f2dfa4;padding:7px 10px;border-radius:9px;font-size:.81rem;font-weight:650}
 .day-plan{display:grid;gap:10px}.day-card{border:1px solid var(--line);border-radius:14px;padding:14px;background:#fbfdff}
 .day-title{display:flex;justify-content:space-between;gap:10px;margin-bottom:9px;align-items:center}
 .day-title strong{font-size:.92rem}.day-title span{font-size:.76rem;color:var(--muted)}
@@ -109,8 +108,6 @@ fieldset{border:0;padding:0;margin:18px 0}legend{font-weight:800;margin:0 0 10px
 <h3>Apuntes prioritarios de la clase</h3>
 <p class="muted">Se muestran los PDF incluidos en la carpeta de esta clase. No son tareas adicionales para el día de clase.</p>
 <div class="assigned" id="class-notes"></div>
-<h3>Casuísticas del supuesto sin resolver</h3>
-<div class="case-list" id="cases"></div>
 <h3>Tu agenda de estudio hasta la próxima clase</h3>
 <p class="muted" id="week-total">Distribuyendo tus apuntes…</p>
 <div class="day-plan" id="schedule"></div>
@@ -189,8 +186,8 @@ function renderPlan(){
  if(!planData)return;
  const w=planData.semana,docs=Array.isArray(planData.catalogo)?planData.catalogo:[],marks=new Map((planData.progreso||[]).map(p=>[keyDoc(p),p.estudiado_en]));
  const map=new Map(docs.map(d=>[keyDoc(d),d]));
- const root=$("class-notes"),cases=$("cases"),source=$("case-source"),agenda=$("schedule");
- root.replaceChildren();cases.replaceChildren();source.replaceChildren();agenda.replaceChildren();
+ const root=$("class-notes"),source=$("case-source"),agenda=$("schedule");
+ root.replaceChildren();source.replaceChildren();agenda.replaceChildren();
  const mins=Number($("minutes").value),level=$("level").value,weights=planData.pesos_orientativos||{};
  if(!Number.isInteger(mins)||mins<15||mins>480||!selectedDays().length){
   $("week-total").textContent="Selecciona al menos un día y entre 15 y 480 minutos diarios para generar recomendaciones.";return;
@@ -207,8 +204,6 @@ function renderPlan(){
    a.href=url;a.target="_blank";a.rel="noopener noreferrer";
    source.append(header,a);
   }
-  (Array.isArray(w.casuisticas)?w.casuisticas:[]).forEach(t=>cases.append(node("span",t,"case")));
-  if(!cases.childElementCount)cases.append(node("p","No hay casuísticas publicadas para esta clase.","muted"));
   const allKeys=new Set();
   const pick=(pairs)=>{const out=[];for(const p of pairs||[]){
     if(!p||!["trafico","administrativa","seguridad"].includes(p.materia))continue;
@@ -228,7 +223,6 @@ function renderPlan(){
   if(!root.childElementCount)root.append(node("p","Los apuntes de esta clase todavía no están enlazados al catálogo online. Las casuísticas sí están disponibles arriba.","muted"));
  }else{
   $("current-week").textContent="La siguiente clase aún no tiene bloque publicado. Mientras tanto, continúa con el avance autónomo y los repasos.";
-  cases.append(node("span","A la espera de la próxima clase BCPOL","case"));
   end=new Date(Date.now()+7*86400000).toISOString();
  }
  const used=new Set([...core,...extra].map(keyDoc));
