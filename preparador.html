@@ -98,7 +98,7 @@ fieldset{border:0;padding:0;margin:18px 0}legend{font-weight:800;margin:0 0 10px
 <h3>Tu agenda de estudio hasta la próxima clase</h3>
 <p class="muted" id="week-total">Distribuyendo tus apuntes…</p>
 <div class="day-plan" id="schedule"></div>
-<p class="note">Las fechas cambian al finalizar cada clase, no a medianoche del miércoles. Los porcentajes de frecuencia de exámenes son orientativos, no equivalen a probabilidades por apunte. Un tema marcado como «estudiado» puede seguir requiriendo repaso.</p>
+<p class="note">El siguiente bloque se activa a las 00:00 del día posterior a la clase programada en el calendario BCPOL. Los porcentajes de frecuencia de exámenes son orientativos, no equivalen a probabilidades por apunte. Un tema marcado como «estudiado» puede seguir requiriendo repaso.</p>
 </section>
 </div>
 </main>
@@ -153,7 +153,7 @@ function buildProgress(data){
  $("progress-fill").style.width=pct+"%";
 }
 function dateListInPeriod(start,end){
- const days=selectedDays(),result=[],today=madridYmd(new Date()),last=madridYmd(new Date(end));
+ const days=selectedDays(),result=[],today=madridYmd(new Date()),last=madridYmd(new Date(Date.parse(end)-1));
  if(!days.length)return result;
  const first=new Date(today+"T12:00:00Z");
  for(let i=0;i<9;i++){
@@ -182,7 +182,7 @@ function renderPlan(){
  let core=[],extra=[],block="mixto",end;
  if(w){
   block=w.bloque;end=w.fin_plan;
-  $("current-week").textContent=w.titulo+" · Preparación hasta el "+niceDate(w.fin_plan)+". Al terminar la clase se activa el siguiente bloque.";
+  $("current-week").textContent=w.titulo+" · Clase del "+niceDate((w.fecha_clase||madridYmd(new Date(Date.parse(w.fin_plan)-1)))+"T12:00:00Z")+". El siguiente bloque comienza a las 00:00 del día posterior a la clase.";
   const url=safeDriveUrl(w.enlace_sup_sin_resolver);
   if(url){const a=node("a","Abrir supuesto de la semana sin resolver","note-link");a.href=url;a.target="_blank";a.rel="noopener noreferrer";source.append(a);}
   (Array.isArray(w.casuisticas)?w.casuisticas:[]).forEach(t=>cases.append(node("span",t,"case")));
