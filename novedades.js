@@ -115,6 +115,7 @@
         firmas[key] = huella([titulo, url, apunte[tipo + '_fecha'] || ''].join('|'));
         if (existe && anterior[key] !== firmas[key]) {
           noticias.push({
+            id: 'apunte:' + materia + ':' + key + ':' + firmas[key],
             tipo: tipo === 'pdf' ? 'APUNTE' : 'PÓDCAST',
             titulo: titulo,
             descripcion: (anterior[key] ? 'Material actualizado' : 'Nuevo material disponible') + ' · ' + etiqueta,
@@ -142,6 +143,7 @@
           firmas[key] = huella(titulo + '|' + url);
           if (existe && anterior[key] !== firmas[key]) {
             noticias.push({
+              id: 'aula:' + key + ':' + firmas[key],
               tipo: tipo === 'drive_url' ? 'MATERIAL DE CLASE' : 'VÍDEO DE CLASE',
               titulo: titulo,
               descripcion: anterior[key] ? 'Enlace actualizado en el Aula Virtual' : 'Nuevo recurso en el Aula Virtual',
@@ -163,6 +165,11 @@
   }
   function cerrar() {
     if (pendiente) {
+      // Lo que no cabe en el emergente queda en cola para el próximo acceso.
+      pendiente.estado.pendientes = pendiente.noticias.slice(20).map(function (n) {
+        return { id:n.id, tipo:n.tipo, titulo:n.titulo, descripcion:n.descripcion,
+                 enlace:n.enlace, texto_enlace:n.texto_enlace, destacado:n.destacado === true };
+      });
       guardar(pendiente.usuario, pendiente.estado);
       pendiente = null;
     }
@@ -194,7 +201,7 @@
     }
     if (noticias.length > maximo) {
       listado.append(elemento('li', 'bcpol-news-more',
-        'Además, ' + (noticias.length - maximo) + ' actualizaciones más. Consulta los apartados de apuntes y Aula Virtual para verlas.'));
+        'Hay ' + (noticias.length - maximo) + ' novedades adicionales pendientes. Se mostrarán en tu próximo acceso, sin perderse.'));
     }
     if (resumen) resumen.textContent = noticias.length > 1
       ? 'Novedades publicadas desde tu última consulta. Se guardarán como vistas al cerrar este aviso.'
@@ -219,7 +226,8 @@
     const previo = leer(usuario);
     const siguiente = {
       avisos: previo.avisos.slice(),
-      catalogos: Object.assign({}, previo.catalogos)
+      catalogos: Object.assign({}, previo.catalogos),
+      pendientes: []
     };
     const novedadesDirectas = [];
     for (const aviso of AVISOS) {
@@ -228,7 +236,14 @@
         siguiente.avisos.push(aviso.id);
       }
     }
-    // El nuevo Planning aparece sin esperar cuatro consultas externas.
+    // Priorizar los comunicados, pero no perder novedades pendientes previas.
+    const pendientesPrevios = Array.isArray(previo.pendientes) ? previo.pendientes.slice(0, 500) : [];
+    const idsDirectos = new Set(novedadesDirectas.map(function (n) { return n.id; }));
+    for (const n of pendientesPrevios) {
+      if (!n || typeof n !== 'object' || typeof n.id !== 'string' || idsDirectos.has(n.id)) continue;
+      novedadesDirectas.push(n); idsDirectos.add(n.id);
+    }
+    // La comunicación principal aparece sin esperar cuatro consultas externas.
     if (novedadesDirectas.length) mostrar(usuario, siguiente, novedadesDirectas, actual);
     const tareas = MATERIAS.map(async function (par) {
       const materia = par[0], etiqueta = par[1];
