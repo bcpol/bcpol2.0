@@ -167,12 +167,20 @@ function buildProgress(data){
 }
 function dateListInPeriod(start,end,classDate){
  const selected=selectedDays(),result=[],today=madridYmd(new Date()),last=madridYmd(new Date(Date.parse(end)-1));
+ const startDate=start?new Date(start):null,validStart=Boolean(startDate&&!Number.isNaN(startDate.getTime()));
+ let firstStudyDate=validStart?madridYmd(startDate):today;
+ // Cuando el planning se activa tras terminar una clase por la tarde,
+ // la primera tarea se asigna al día siguiente, no a la noche de la clase.
+ if(validStart){
+  const hour=Number(new Intl.DateTimeFormat("en-GB",{timeZone:"Europe/Madrid",hour:"2-digit",hourCycle:"h23"}).format(startDate));
+  if(hour>=18)firstStudyDate=new Date(Date.parse(firstStudyDate+"T12:00:00Z")+86400000).toISOString().slice(0,10);
+ }
  const first=new Date(today+"T12:00:00Z");
  for(let i=0;i<9;i++){
   const dt=new Date(first.getTime()+i*86400000),iso=dt.toISOString().slice(0,10),weekday=(dt.getUTCDay()+6)%7;
   if(iso>last)break;
   const classDay=Boolean(classDate&&iso===classDate),studyDay=selected.includes(weekday);
-  if(iso<today||(!studyDay&&!classDay))continue;
+  if(iso<today||iso<firstStudyDate||(!studyDay&&!classDay))continue;
   result.push({iso,weekday,classDay,studyDay});
  }
  return result;
@@ -234,7 +242,7 @@ function renderPlan(){
    const score=d=>examScore(d,weights,level)+Math.min(60,age(d)*2);
    return score(b)-score(a);
  });
- const days=dateListInPeriod(null,end,w?.fecha_clase||null),m=mins;
+ const days=dateListInPeriod(w?.inicio_plan||null,end,w?.fecha_clase||null),m=mins;
  const studyDays=days.filter(d=>d.studyDay&&!d.classDay);
  const hasClass=days.some(d=>d.classDay);
  const extraClassReview=w&&days.some(d=>d.classDay&&d.studyDay)?Math.max(0,m-150):0;
