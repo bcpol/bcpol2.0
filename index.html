@@ -41,9 +41,7 @@ const classesData = [
 ];
 
 const convocatoriasData = [
-  { municipio: "Manzanilla (Huelva)", plazas: "2", fecha: "03/11/2026", tasa: "" },
-  { municipio: "Torredonjimeno (Jaén)", plazas: "3", fecha: "10/11/2026", tasa: "20,00" },
-  { municipio: "Loja (Granada)", plazas: "6", fecha: "10/11/2026", tasa: "27,80" },
+  { municipio: "Benalup-Casas Viejas (Cádiz)", plazas: "2 libre", fecha: "10/12/2026", tasa: "Gratis", nueva: true },
   { municipio: "Las Cabezas de San Juan (Sevilla)", plazas: "3", fecha: "11/11/2026", tasa: "75,50" },
   { municipio: "Montejícar (Granada)", plazas: "1", fecha: "12/11/2026", tasa: "50,00" },
   { municipio: "Vícar (Almería)", plazas: "3", fecha: "23/11/2026", tasa: "" },
@@ -230,6 +228,30 @@ footer{margin-top:70px;background:var(--navy);color:#b9cada}.footer-inner{width:
   .premium-feature .feature-icon img{width:88px!important;height:88px!important;max-width:88px!important;max-height:88px!important}
 }
 
+
+/* Convocatoria recién publicada: fondo distinto al resto. */
+#convocatorias .data-table tbody tr.convocatoria-nueva td{
+  background:#eaf8ef!important;
+  border-top:1px solid #b5dfc3!important;
+  border-bottom:1px solid #b5dfc3!important;
+}
+#convocatorias .data-table tbody tr.convocatoria-nueva td:first-child{
+  border-left:4px solid #1ca45b!important;
+}
+#convocatorias .data-table tbody tr.convocatoria-nueva:hover td{background:#dcf3e4!important}
+#convocatorias .convocatoria-badge{
+  display:inline-block;
+  vertical-align:middle;
+  margin-left:7px;
+  padding:3px 8px;
+  border-radius:999px;
+  background:#e52d37;
+  color:#fff;
+  font-size:.68rem;
+  font-weight:900;
+  letter-spacing:.03em;
+  white-space:nowrap;
+}
 </style>
 
 <style id="bcpol-mobile-v9">
@@ -707,6 +729,32 @@ function toggleMenu(){document.getElementById('nav').classList.toggle('open')}do
     }).join("");
   }
 
+  // Al cerrar el plazo, la convocatoria desaparece automáticamente.
+  function fechaOrden(fecha) {
+    const match = String(fecha || "").match(/^([0-9]{2})\/([0-9]{2})\/([0-9]{4})$/);
+    return match ? Number(match[3] + match[2] + match[1]) : 0;
+  }
+
+  function renderConvocatorias() {
+    const tbody = document.getElementById("convocatoriasTableBody");
+    if (!tbody) return;
+    const hoyEnEspana = new Intl.DateTimeFormat("es-ES", {
+      timeZone: "Europe/Madrid", day: "2-digit", month: "2-digit", year: "numeric"
+    }).format(new Date());
+    const abiertas = convocatoriasData.filter(item =>
+      fechaOrden(item.fecha) >= fechaOrden(hoyEnEspana)
+    );
+    const labels = ["Municipio", "Plazas", "Plazo fin", "Tasa (€)"];
+    tbody.innerHTML = abiertas.length ? abiertas.map(item => {
+      const datos = [item.municipio, item.plazas, item.fecha, item.tasa];
+      return '<tr' + (item.nueva ? ' class="convocatoria-nueva"' : '') + '>' +
+        datos.map((valor, i) => '<td data-label="' + escapeHTML(labels[i]) + '">' +
+          escapeHTML(valor) +
+          (i === 0 && item.nueva ? ' <span class="convocatoria-badge">★ NEW</span>' : '') +
+          '</td>').join('') + '</tr>';
+    }).join('') : '<tr><td colspan="4">No hay convocatorias con plazo de solicitudes abierto.</td></tr>';
+  }
+
   function updateEditableContent() {
     renderRows(
       "classesTableBody",
@@ -714,11 +762,7 @@ function toggleMenu(){document.getElementById('nav').classList.toggle('open')}do
       ["Día", "Fecha", "Hora"]
     );
 
-    renderRows(
-      "convocatoriasTableBody",
-      convocatoriasData.map(x => [x.municipio, x.plazas, x.fecha, x.tasa]),
-      ["Municipio", "Plazas", "Plazo fin", "Tasa (€)"]
-    );
+    renderConvocatorias();
   }
 
   if (document.readyState === "loading") {
