@@ -70,6 +70,15 @@ function refreshVideoChoices(keep){
  if(loadedClasses.some(c=>(c.month_id+'|'+c.lesson_number)===wanted))$('videoClass').value=wanted;
  refreshVideoField();
 }
+function canonicalDriveFolder(input){
+ const value=input.trim();if(!value)return '';
+ const folder=value.match(/^https:\/\/drive\.google\.com\/drive\/(?:u\/\d+\/)?folders\/([A-Za-z0-9_-]+)\/?(?:\?[^#\s]*)?(?:#[^\s]*)?$/i);
+ const shared=value.match(/^https:\/\/drive\.google\.com\/(?:open|folderview)\?([^#\s]*)(?:#[^\s]*)?$/i);
+ let id=folder?.[1]||'';
+ if(!id&&shared){const p=shared[1].match(/(?:^|&)id=([A-Za-z0-9_-]+)(?:&|$)/);id=p?.[1]||'';}
+ if(!/^[A-Za-z0-9_-]{10,}$/.test(id))throw Error('Introduce el enlace de una carpeta de Google Drive (no de un archivo).');
+ return 'https://drive.google.com/drive/folders/'+id;
+}
 function canonicalYouTube(input){
  const text=input.trim();if(!text)return '';
  let u;try{u=new URL(text);}catch{throw Error('Introduce un enlace de YouTube válido.');}
@@ -109,7 +118,7 @@ $('saveAccess').addEventListener('click',()=>{const s=current();if(!s)return;con
  if(previous?.granted===true && !paid && !confirm('Este alumno ya tenía esta mensualidad. Solo desmarca un mes si fue un error de registro. ¿Continuar?'))return;
  if(ready && previous?.drive_verified!==true && !confirm('¿Has comprobado que el correo del alumno tiene acceso REAL en la carpeta del mes de Google Drive? Marcar esta casilla no concede permisos.'))return;
  save('set_access',{username:s.username,month_id:$('month').value,granted:paid,drive_verified:ready});});
-$('saveClass').addEventListener('click',()=>{const n=Number($('classNum').value),title=$('classTitle').value.trim(),url=$('classLink').value.trim();if(!Number.isInteger(n)||n<1||n>70||!title){message('Indica número y título de clase válidos.',true);return;}save('save_class',{month_id:$('classMonth').value,lesson_number:n,title,drive_url:url,published:$('published').checked});});
+$('saveClass').addEventListener('click',()=>{const n=Number($('classNum').value),title=$('classTitle').value.trim();if(!Number.isInteger(n)||n<1||n>70||!title){message('Indica número y título de clase válidos.',true);return;}let url;try{url=canonicalDriveFolder($('classLink').value);}catch(e){message(e.message,true);return;}$('classLink').value=url;save('save_class',{month_id:$('classMonth').value,lesson_number:n,title,drive_url:url,published:$('published').checked});});
 async function boot(){
  const identity=await api('mine');
  if(identity.is_teacher!==true)throw Error('Este panel solo está disponible para el preparador.');
