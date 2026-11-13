@@ -1,0 +1,27 @@
+name: BCPOL piloto privado test por apunte web
+on:
+  push:
+    branches: [piloto-test-apunte-web-20261113]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validar botones privados y características existentes
+        run: python -m unittest discover -s tests -p 'test_piloto_apuntes.py' -v
+      - name: Comprobar sintaxis del JavaScript
+        run: |
+          python - <<'PY'
+          import pathlib,re
+          html=pathlib.Path('apuntes.html').read_text()
+          scripts=re.findall(r'<script>([\s\S]*?)</script>',html)
+          pathlib.Path('/tmp/piloto.js').write_text('\n'.join(scripts))
+          PY
+          node --check /tmp/piloto.js
