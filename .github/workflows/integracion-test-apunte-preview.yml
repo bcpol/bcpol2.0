@@ -1,0 +1,27 @@
+name: BCPOL web vista previa - test por apunte
+on:
+  push:
+    branches: [integracion-test-apunte-web-20261113]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validar-vista-previa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validar enlaces y botón privado de biblioteca
+        run: python -m unittest discover -s tests -p 'test_integracion_nota_preview.py' -v
+      - name: Comprobar sintaxis del Javascript de la biblioteca
+        run: |
+          python - <<'PY'
+          import pathlib,re
+          s=pathlib.Path('apuntes.html').read_text(encoding='utf-8')
+          scripts=re.findall(r'<script>([\s\S]*?)</script>',s)
+          pathlib.Path('/tmp/apuntes-test-preview.js').write_text('\n'.join(scripts),encoding='utf-8')
+          PY
+          node --check /tmp/apuntes-test-preview.js
