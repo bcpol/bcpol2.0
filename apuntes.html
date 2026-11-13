@@ -60,6 +60,14 @@ footer{text-align:center;padding:30px 15px;color:var(--muted);font-size:.75rem}
 /* Preview privado: la autorización real sigue correspondiendo al bot por ID. */
 .btn.test-apunte{background:#116b70;color:#fff;border:1px solid #0d5459}
 .btn.test-apunte:hover,.btn.test-apunte:focus-visible{background:#084b50;color:#fff;outline:2px solid #1a8b91;outline-offset:2px}
+
+/* Móvil: botones en dos columnas, sin estrecharlos ni solapar textos. */
+@media (max-width:750px){
+  .item .actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;width:100%;margin-top:14px;align-items:stretch;justify-content:stretch}
+  .item .actions > .btn{width:100%;min-width:0;min-height:46px;flex:none;padding:10px 8px;line-height:1.25;white-space:normal;overflow-wrap:break-word;text-align:center}
+  .item .actions > .btn.mark{min-width:0}
+  .item .actions > .btn:last-child:nth-child(odd){grid-column:1/-1}
+}
 </style>
 </head>
 <body>
