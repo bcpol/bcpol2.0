@@ -78,6 +78,13 @@ fieldset{border:0;padding:0;margin:18px 0}legend{font-weight:800;margin:0 0 10px
  .study-note .links{flex-wrap:wrap}
  .mark-study{white-space:normal;min-height:38px}
 }
+
+/* Reinicio consciente y exclusivo de las marcas de lectura de cada alumno. */
+.reset-progress{display:flex;flex-wrap:wrap;gap:8px 13px;align-items:center;margin-top:13px;border-top:1px solid var(--line);padding-top:16px}
+.reset-progress button{border:1px solid #e2b6b6;background:#fff9f9;color:#974149;border-radius:10px;padding:9px 13px;font-size:.78rem;font-weight:800;cursor:pointer;font-family:inherit}
+.reset-progress button:hover:not(:disabled){background:#fceced}
+.reset-progress button:disabled{opacity:.45;cursor:default}
+.reset-progress small{font-size:.74rem;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -114,6 +121,10 @@ fieldset{border:0;padding:0;margin:18px 0}legend{font-weight:800;margin:0 0 10px
 <p class="muted" id="progress-percent">—</p>
 <div id="subjects"></div>
 <p class="note">«Estudiado» no significa «dominado». Los test permitirán medir el dominio cuando terminemos su integración.</p>
+<div class="reset-progress">
+<button id="reset-progress" type="button" disabled>↺ Reiniciar mi progreso (0%)</button>
+<small>Elimina todas tus marcas de estudiado. Requiere confirmación y no afecta a tus test.</small>
+</div>
 </section></div>
 <section class="panel" id="plan-panel">
 <h2>3. Qué apuntes debes estudiar esta semana</h2>
@@ -161,6 +172,28 @@ function markNotice(message,bad=false){
  const banner=$("mark-notice");banner.textContent=message;banner.className=bad?"bad":"";banner.hidden=false;
  clearTimeout(markNoticeTimer);markNoticeTimer=setTimeout(()=>banner.hidden=true,4300);
 }
+async function resetOwnProgress(){
+ if(!planData||markInFlight)return;
+ const marks=Array.isArray(planData.progreso)?planData.progreso:[];
+ if(!marks.length){markNotice("Tu progreso ya está a 0%.");return;}
+ const confirmed=window.confirm("¿QUIERES REINICIAR TODO TU PROGRESO DE APUNTES?\n\nSe borrarán tus "+marks.length+" marcas de ESTUDIADO de Tráfico, Policía Administrativa y Seguridad Ciudadana. El progreso volverá al 0 %.\n\nEste cambio no se puede deshacer. No afecta a tus test, a otros alumnos ni a la configuración de estudio.");
+ if(!confirmed)return;
+ markInFlight=true;
+ $("reset-progress").disabled=true;
+ document.querySelectorAll(".mark-study").forEach(b=>b.disabled=true);
+ try{
+  await post("bcpol-apuntes",{action:"reset",confirmacion:"REINICIAR"});
+  planData.progreso=[];
+  lastMarksSyncAt=Date.now();
+  buildProgress(planData);renderPlan();
+  markNotice("Progreso reiniciado: 0 %. Todos tus apuntes vuelven a estar pendientes.");
+ }catch(err){markNotice(err.message||"No se ha podido reiniciar el progreso.",true);}
+ finally{
+  markInFlight=false;
+  $("reset-progress").disabled=!(planData?.progreso?.length);
+  document.querySelectorAll(".mark-study").forEach(b=>b.disabled=false);
+ }
+}
 function addStudyToggle(host,doc,marks){
  const studied=marks.has(keyDoc(doc)),button=node("button",studied?"✓ Estudiado":"○ Marcar estudiado","mark-study");
  button.type="button";button.setAttribute("aria-pressed",String(studied));
@@ -180,7 +213,7 @@ async function toggleStudied(doc){
   lastMarksSyncAt=Date.now();buildProgress(planData);renderPlan();
   markNotice(next?"Apunte marcado como ESTUDIADO. También aparecerá así en APUNTES ONLINE.":"Apunte marcado como PENDIENTE. El cambio también se guarda en APUNTES ONLINE.");
  }catch(err){markNotice(err.message||"No se pudo guardar el progreso.",true);}
- finally{markInFlight=false;document.querySelectorAll(".mark-study").forEach(b=>b.disabled=false);}
+ finally{markInFlight=false;document.querySelectorAll(".mark-study").forEach(b=>b.disabled=false);$("reset-progress").disabled=!(planData?.progreso?.length);}
 }
 async function syncMarksOnReturn(){
  if(document.hidden||!planData||markInFlight||marksRefreshing||Date.now()-lastMarksSyncAt<1800)return;
@@ -218,6 +251,7 @@ function buildProgress(data){
  $("progress-status").replaceChildren(node("span",studied+" apuntes estudiados","pill"));
  $("progress-percent").textContent=studied+" de "+docs.length+" · "+pct+" % del catálogo";
  $("progress-fill").style.width=pct+"%";
+ $("reset-progress").disabled=studied===0||markInFlight;
 }
 function dateListInPeriod(start,end,classDate){
  const selected=selectedDays(),result=[],today=madridYmd(new Date()),last=madridYmd(new Date(Date.parse(end)-1));
@@ -444,6 +478,7 @@ async function init(){
   buildProgress(data);renderPlan();
  }catch(err){$("status").textContent=err.message||"No se pudo consultar tu planificación";}
 }
+$("reset-progress").addEventListener("click",resetOwnProgress);
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)syncMarksOnReturn();});
 window.addEventListener("focus",syncMarksOnReturn);
 init();
