@@ -118,7 +118,7 @@ const materia=new URLSearchParams(location.search).get("materia")||"trafico";
 const token=sessionStorage.getItem("bcpol_session_v2");
 const endpoint="https://axgbiqbyserypsbtwnjr.supabase.co/functions/v1/bcpol-apuntes";
 const $=id=>document.getElementById(id);
-let docs=[],done=new Set(),noticeTimer,adminTestPorApunte=false;
+let docs=[],done=new Set(),noticeTimer,adminTestPorApunte=false,pendingMarks=0,markVersion=0,marksRefreshing=false,lastMarksSyncAt=0;
 async function comprobarPilotoAdmin(){
   if(!token)return false;
   try{
@@ -152,10 +152,24 @@ function setProgress(){
 }
 async function toggleMark(item,button){
   const next=!done.has(item.tema_id);
-  button.disabled=true;
+  pendingMarks++;markVersion++;button.disabled=true;
   try{await api("mark",{tema_id:item.tema_id,estudiado:next});if(next)done.add(item.tema_id);else done.delete(item.tema_id);setProgress();render();}
   catch(e){say(e.message);}
-  finally{button.disabled=false;}
+  finally{pendingMarks--;lastMarksSyncAt=Date.now();button.disabled=false;}
+}
+async function refreshMarksOnReturn(){
+  if(!token||document.hidden||!docs.length||pendingMarks||marksRefreshing||Date.now()-lastMarksSyncAt<1800)return;
+  lastMarksSyncAt=Date.now();marksRefreshing=true;
+  const version=markVersion;
+  try{
+    const updated=await api("list");
+    if(version!==markVersion||pendingMarks)return;
+    const latest=new Set((Array.isArray(updated.progreso)?updated.progreso:[]).map(p=>p.tema_id));
+    if(latest.size!==done.size||Array.from(latest).some(id=>!done.has(id))){
+      done=latest;setProgress();render();
+    }
+  }catch(_){/* No se pierde el estado visible por un fallo temporal de red. */}
+  finally{marksRefreshing=false;}
 }
 function render(){
   const query=$("search").value.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim(),filter=$("filter").value;
@@ -197,12 +211,14 @@ async function init(){
  try{
    const v=await api("list");
    docs=(Array.isArray(v.apuntes)?v.apuntes:[]).sort((a,b)=>Number(a.tema_id)-Number(b.tema_id));
-   done=new Set((Array.isArray(v.progreso)?v.progreso:[]).map(p=>p.tema_id));
+   done=new Set((Array.isArray(v.progreso)?v.progreso:[]).map(p=>p.tema_id));lastMarksSyncAt=Date.now();
    adminTestPorApunte=await comprobarPilotoAdmin();
    $("status").hidden=true;$("library").hidden=false;
    setProgress();render();
  }catch(e){error(e.message);}
 }
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)refreshMarksOnReturn();});
+window.addEventListener("focus",refreshMarksOnReturn);
 init();
 })();
 </script>
