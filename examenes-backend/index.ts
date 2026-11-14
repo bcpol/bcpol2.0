@@ -48,7 +48,7 @@ Deno.serve(async (req:Request)=>{
     if(typeof body.token!=="string" || !/^[A-Za-z0-9_-]{43}$/.test(body.token))return respond({ok:false,error:"Sesión no válida"},401,origin);
     const user=await verify(body.token);
     if(!user)return respond({ok:false,error:"La sesión ha caducado"},401,origin);
-    const query="bcpol_examenes_catalogo?select=id,titulo,municipio,anio,modalidad,materias,drive_url,clasificacion&order=anio.desc,municipio.asc,id.asc&limit=500";
+    const query="bcpol_examenes_catalogo?select=id,titulo,municipio,anio,modalidad,materias,materias_detalladas,drive_url,clasificacion&order=anio.desc,municipio.asc,id.asc&limit=500";
     const res=await fetch(BASE+"/rest/v1/"+query,{headers:dbHeaders(),signal:AbortSignal.timeout(12000)});
     if(!res.ok)throw new Error("catalog unavailable");
     const items=await res.json();
