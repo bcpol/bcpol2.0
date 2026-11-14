@@ -63,6 +63,21 @@ fieldset{border:0;padding:0;margin:18px 0}legend{font-weight:800;margin:0 0 10px
 .case-cta-button:hover{background:#0d2e4c}
 .case-cta-button:focus-visible{outline:3px solid #267de1;outline-offset:3px}
 @media(max-width:620px){.case-cta{align-items:stretch;padding:15px}.case-cta-button{width:100%;min-height:49px}}
+
+/* Marcas de estudio compartidas entre el planning y APUNTES ONLINE. */
+.mark-study{border:1px solid #b7d0e1;border-radius:9px;background:#fff;color:#104e78;padding:8px 11px;font-size:.74rem;font-weight:800;line-height:1.25;font-family:inherit;cursor:pointer;white-space:nowrap}
+.mark-study:hover{background:#eaf4fc}
+.mark-study[aria-pressed="true"]{border-color:#9fcfb1;background:#e3f6e9;color:#12663e}
+.mark-study:disabled{opacity:.55;cursor:wait}
+.day-task .links{display:flex;align-items:center;justify-content:flex-end;gap:9px;flex-wrap:wrap}
+#mark-notice{position:fixed;bottom:17px;left:50%;transform:translateX(-50%);max-width:min(92vw,580px);z-index:1000;background:#102f4b;color:#fff;padding:12px 18px;border-radius:12px;box-shadow:0 10px 34px #06182b44;font-size:.83rem;font-weight:750;text-align:center}
+#mark-notice.bad{background:#a12e3d}
+[hidden]{display:none!important}
+@media(max-width:620px){
+ .day-task{flex-wrap:wrap}.day-task .links{width:100%;justify-content:flex-start;padding-left:78px}
+ .study-note .links{flex-wrap:wrap}
+ .mark-study{white-space:normal;min-height:38px}
+}
 </style>
 </head>
 <body>
@@ -115,6 +130,7 @@ fieldset{border:0;padding:0;margin:18px 0}legend{font-weight:800;margin:0 0 10px
 </section>
 </div>
 </main>
+<div id="mark-notice" role="status" aria-live="polite" hidden></div>
 <script>
 (function(){
 "use strict";
@@ -134,13 +150,51 @@ async function post(endpoint,payload){
     return body;
   }finally{clearTimeout(timeout);}
 }
-let planData=null;
+let planData=null,markInFlight=false,lastMarksSyncAt=0,marksRefreshing=false,markNoticeTimer;
 const subjectNames=Object.fromEntries(subjects);
 function safeDriveUrl(raw){
  try{const u=new URL(raw);return u.protocol==="https:"&&u.hostname==="drive.google.com"&&/^\/file\/d\/[A-Za-z0-9_-]+\/view/.test(u.pathname)?u.href:null;}catch(_){return null;}
 }
 function node(tag,text,cls){const e=document.createElement(tag);if(text!==undefined&&text!==null)e.textContent=String(text);if(cls)e.className=cls;return e;}
 function keyDoc(d){return d.materia+":"+d.tema_id;}
+function markNotice(message,bad=false){
+ const banner=$("mark-notice");banner.textContent=message;banner.className=bad?"bad":"";banner.hidden=false;
+ clearTimeout(markNoticeTimer);markNoticeTimer=setTimeout(()=>banner.hidden=true,4300);
+}
+function addStudyToggle(host,doc,marks){
+ const studied=marks.has(keyDoc(doc)),button=node("button",studied?"✓ Estudiado":"○ Marcar estudiado","mark-study");
+ button.type="button";button.setAttribute("aria-pressed",String(studied));
+ button.setAttribute("aria-label",(studied?"Desmarcar como estudiado: ":"Marcar como estudiado: ")+(doc.titulo_clase||doc.titulo));
+ button.addEventListener("click",()=>toggleStudied(doc));
+ host.append(button);
+}
+async function toggleStudied(doc){
+ if(markInFlight||!planData)return;
+ const key=keyDoc(doc),marks=new Set((planData.progreso||[]).map(keyDoc)),next=!marks.has(key);
+ markInFlight=true;document.querySelectorAll(".mark-study").forEach(b=>b.disabled=true);
+ try{
+  await post("bcpol-apuntes",{action:"mark",materia:doc.materia,tema_id:String(doc.tema_id),estudiado:next});
+  const current=Array.isArray(planData.progreso)?planData.progreso:[];
+  planData.progreso=current.filter(p=>keyDoc(p)!==key);
+  if(next)planData.progreso.push({materia:doc.materia,tema_id:String(doc.tema_id),estudiado_en:new Date().toISOString()});
+  lastMarksSyncAt=Date.now();buildProgress(planData);renderPlan();
+  markNotice(next?"Apunte marcado como ESTUDIADO. También aparecerá así en APUNTES ONLINE.":"Apunte marcado como PENDIENTE. El cambio también se guarda en APUNTES ONLINE.");
+ }catch(err){markNotice(err.message||"No se pudo guardar el progreso.",true);}
+ finally{markInFlight=false;document.querySelectorAll(".mark-study").forEach(b=>b.disabled=false);}
+}
+async function syncMarksOnReturn(){
+ if(document.hidden||!planData||markInFlight||marksRefreshing||Date.now()-lastMarksSyncAt<1800)return;
+ lastMarksSyncAt=Date.now();marksRefreshing=true;
+ try{
+  const latest=await post("bcpol-plan-estudio",{action:"plan"});
+  if(markInFlight)return;
+  if(JSON.stringify(latest.progreso||[])!==JSON.stringify(planData.progreso||[])){
+   planData.progreso=Array.isArray(latest.progreso)?latest.progreso:[];
+   buildProgress(planData);renderPlan();
+  }
+ }catch(_){/* Se conserva el último estado visible si falla la conexión. */}
+ finally{marksRefreshing=false;}
+}
 function madridYmd(date){
  const parts=new Intl.DateTimeFormat("en-GB",{timeZone:"Europe/Madrid",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(date);
  const data=Object.fromEntries(parts.map(x=>[x.type,x.value]));
@@ -226,6 +280,7 @@ function renderPlan(){
    info.append(node("strong",d.titulo_clase||d.titulo),node("small",(subjectNames[d.materia]||d.materia)+" · "+(marks.has(keyDoc(d))?"Ya estudiado: repasar para el supuesto":"Pendiente de estudiar")));
    docLink(actions,d,"Ver apunte");
    if(d.audio_url){const au=safeDriveUrl(d.audio_url);if(au){const a=node("a","Escuchar podcast","note-link");a.href=au;a.target="_blank";a.rel="noopener noreferrer";actions.append(a);}}
+   addStudyToggle(actions,d,marks);
    card.append(info,actions);root.append(card);
   }
   if(!root.childElementCount)root.append(node("p","Los apuntes de esta clase todavía no están enlazados al catálogo online. Las casuísticas sí están disponibles arriba.","muted"));
@@ -290,6 +345,7 @@ function renderPlan(){
   detail.append(node("strong",d.titulo));
   detail.append(node("small",minutes+" min · "+(subjectNames[d.materia]||d.materia)+(comment?" · "+comment:"")));
   const links=node("div",null,"links");docLink(links,d,"Abrir PDF");
+   addStudyToggle(links,d,marks);
   row.append(tag,detail,links);container.append(row);
  };
  const makeCaseTask=(container,minutes)=>{
@@ -377,7 +433,7 @@ async function init(){
  if(!token){$("status").textContent="Necesitas iniciar sesión en BCPOL. ";const a=document.createElement("a");a.href="index.html";a.textContent="Ir al acceso";$("status").append(a);return;}
  try{
   const data=await post("bcpol-plan-estudio",{action:"plan"});
-  planData=data;
+  planData=data;lastMarksSyncAt=Date.now();
   if(data.perfil){
     const p=data.perfil;
     document.querySelectorAll("[data-day]").forEach(x=>x.checked=Array.isArray(p.dias_estudio)&&p.dias_estudio.includes(Number(x.dataset.day)));
@@ -388,6 +444,8 @@ async function init(){
   buildProgress(data);renderPlan();
  }catch(err){$("status").textContent=err.message||"No se pudo consultar tu planificación";}
 }
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)syncMarksOnReturn();});
+window.addEventListener("focus",syncMarksOnReturn);
 init();
 })();
 </script>
