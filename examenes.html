@@ -47,6 +47,8 @@ h1{margin:6px 0 10px;font-size:clamp(2rem,4vw,3.1rem);letter-spacing:-.04em}
 .topics{display:flex;flex-wrap:wrap;gap:6px}
 .topic{display:inline-block;background:#eef6fd;border:1px solid #d8e8f7;color:#145381;border-radius:7px;padding:5px 8px;font-size:.7rem;font-weight:750;line-height:1.2}
 .topic.pending{background:#fff7e8;border-color:#f4dfb8;color:#925a12}
+.item-verification{display:block;margin-top:8px;font-size:.7rem;color:#62788c;line-height:1.45}
+.item-verification.revisado{color:#23704b;font-weight:750}
 .actions{flex-shrink:0;display:flex;justify-content:flex-end}
 .btn{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:10px 14px;white-space:nowrap;border-radius:10px;background:#eaf4ff;border:1px solid #c7dcea;color:#0d5b97;font-size:.8rem;font-weight:850;text-decoration:none}
 .btn:hover,.btn:focus-visible{background:#d9ecff;outline:2px solid #197fe5;outline-offset:2px}
@@ -78,7 +80,7 @@ footer{text-align:center;padding:30px 15px;color:var(--muted);font-size:.75rem}
         <div><label for="city">MUNICIPIO</label><select id="city"><option value="">Todos los municipios</option></select></div>
         <div><label for="subject">MATERIA</label><select id="subject"><option value="">Todas las materias</option></select></div>
       </div>
-      <p class="note">Las materias son <strong>orientativas y están pendientes de validación individual</strong>. Se han obtenido de un análisis preliminar de los enunciados; consulta el PDF para comprobar el contenido exacto. Los documentos mantienen sus permisos originales de Google Drive.</p>
+      <p class="note">Las fichas con <strong>materias revisadas</strong> se han contrastado con el enunciado y las preguntas del PDF original. Las demás muestran todavía una clasificación preliminar y pueden contener omisiones. Los documentos mantienen sus permisos originales de Google Drive.</p>
     </div>
     <div class="summary"><strong id="count" aria-live="polite"></strong><button class="reset" type="button" id="reset">Limpiar filtros</button></div>
     <div class="list" id="list"></div>
@@ -116,7 +118,7 @@ function setView(next){
 }
 function filtered(){
  const q=normalize($("search").value.trim()),year=$("year").value,city=$("city").value,sub=$("subject").value;
- return docs.filter(d=>(!year||String(d.anio)===year)&&(!city||d.municipio===city)&&(!sub||d.materias.includes(sub))&&(!q||normalize([d.titulo,d.municipio,d.anio,...d.materias].join(" ")).includes(q)));
+ return docs.filter(d=>(!year||String(d.anio)===year)&&(!city||d.municipio===city)&&(!sub||d.materias.includes(sub))&&(!q||normalize([d.titulo,d.municipio,d.anio,...d.materias,...(Array.isArray(d.materias_detalladas)?d.materias_detalladas:[])].join(" ")).includes(q)));
 }
 function render(){
  const found=filtered();
@@ -140,11 +142,15 @@ function render(){
      info.append(elem("h3",null,d.municipio+" · "+d.anio));
      info.append(elem("span","filename",d.titulo));
      if(d.modalidad==="ascenso")info.append(elem("span","kind","PRUEBA DE ASCENSO"));
-     info.append(elem("div","topic-title","Materias del supuesto"));
+     const revisado=d.clasificacion==="verificada"&&Array.isArray(d.materias_detalladas)&&d.materias_detalladas.length>0;
+     info.append(elem("div","topic-title",revisado?"Materias concretas del supuesto":"Materias del supuesto"));
      const topics=elem("div","topics");
-     if(d.materias.length){for(const t of d.materias)topics.append(elem("span","topic",t));}
+     const nombres=revisado?d.materias_detalladas:d.materias;
+     if(nombres.length){for(const t of nombres)topics.append(elem("span","topic",t));}
      else topics.append(elem("span","topic pending","Materias pendientes de clasificar"));
-     info.append(topics);card.append(info);
+     info.append(topics);
+     info.append(elem("small","item-verification"+(revisado?" revisado":""),revisado?"✓ Materias contrastadas con el PDF original":"Clasificación preliminar · pendiente de revisión individual"));
+     card.append(info);
      const actions=elem("div","actions"),url=safeDrive(d.drive_url);
      if(url){const a=elem("a","btn","📄 Ver examen");a.href=url;a.target="_blank";a.rel="noopener noreferrer";a.setAttribute("aria-label","Abrir PDF: "+d.titulo);actions.append(a);}
      card.append(actions);frag.append(card);
