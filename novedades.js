@@ -5,6 +5,16 @@
   // Avisos de publicación: cambia el identificador cuando publiques otro comunicado.
   const AVISOS = [
     {
+      id: 'examenes-oficiales-2026-11-16',
+      tipo: 'NUEVA FUNCIÓN BCPOL',
+      titulo: 'EXÁMENES OFICIALES',
+      descripcion: 'Ya puedes practicar con 328 supuestos de convocatorias reales de Policía Local de Andalucía. Busca por municipio o año y consulta qué materias se trabajan en cada examen.',
+      enlace: 'examenes.html',
+      texto_enlace: 'Consultar exámenes oficiales',
+      icono: '📄',
+      destacado: true
+    },
+    {
       id: 'planning-estudio-novedad-2026-11-10',
       tipo: 'NUEVA FUNCIÓN BCPOL',
       titulo: 'PLANNING DE ESTUDIO',
@@ -98,7 +108,7 @@
   }
   function enlaceInterno(url) {
     // Solo enlaces internos expresamente autorizados, nunca URLs devueltas por catálogos.
-    return /^(mi-preparador\.html|aula\.html|apuntes\.html\?materia=(trafico|administrativa|seguridad))$/.test(url);
+    return /^(examenes\.html|mi-preparador\.html|aula\.html|apuntes\.html\?materia=(trafico|administrativa|seguridad))$/.test(url);
   }
   function construirNoticiasApuntes(datos, materia, etiqueta, anterior, existe) {
     const firmas = {};
@@ -188,7 +198,7 @@
       const destacada = noticia.destacado === true;
       const item = elemento('li', 'bcpol-news-item' + (destacada ? ' bcpol-news-featured' : ''));
       item.append(elemento('span', 'bcpol-news-type', noticia.tipo));
-      if (destacada) item.append(elemento('span', 'bcpol-news-feature-icon', '📅'));
+      if (destacada) item.append(elemento('span', 'bcpol-news-feature-icon', noticia.icono || '📅'));
       item.append(elemento('strong', 'bcpol-news-title', noticia.titulo));
       if (noticia.descripcion) item.append(elemento('p', 'bcpol-news-description', noticia.descripcion));
       if (enlaceInterno(noticia.enlace)) {
