@@ -577,13 +577,13 @@ footer{margin-top:70px;background:var(--navy);color:#b9cada}.footer-inner{width:
   </div>
 </div>
 <div id="login"><div class="logo-login"><img src="LOGO BC POL CUADRADO PNG.png" alt="BCPOL Logo"></div><h2>Acceso restringido</h2><p>Acceso exclusivo para <strong>miembros de BCPOL</strong>. Introduce tus credenciales.</p><div class="input-icon"><input type="text" id="user" placeholder="Usuario" autocomplete="username"><svg class="icon" viewBox="0 0 24 24"><path fill="#888" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><div class="input-icon"><input type="password" id="pass" placeholder="Contraseña" autocomplete="current-password"><svg class="icon" viewBox="0 0 24 24"><path fill="#888" d="M12 17a2 2 0 0 0 2-2v-3a2 2 0 0 0-4 0v3a2 2 0 0 0 2 2zm6-7h-1V7a5 5 0 0 0-10 0v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2zm-7-3a3 3 0 0 1 6 0v3h-6V7z"/></svg></div><button onclick="checkPass()">Entrar en BCPOL</button><p id="loginMessage" role="alert" aria-live="polite"></p></div>
-<div id="app-header"><div class="header-inner"><a class="brand" href="#inicio"><img src="LOGO BC POL CUADRADO PNG.png" alt="BCPOL"><div class="brand-copy"><strong>BCPOL</strong><span>PREPARACIÓN POLICÍA LOCAL · ANDALUCÍA</span></div></a><button class="menu-btn" onclick="toggleMenu()" aria-label="Abrir menú">☰</button><nav id="nav"><ul><li><a href="#inicio">Inicio</a></li><li><a href="#apuntes">Apuntes</a></li><li><a href="examenes.html">Exámenes</a></li><li><a href="#enlaces">Enlaces</a></li><li><a href="#documentos">Documentos</a></li><li><a href="#nubeclases">Drive</a></li><li><a href="#calendario">Calendario</a></li><li><a href="#convocatorias">Convocatorias</a></li><li><a href="#comunidad">Comunidad</a></li></ul></nav><button class="bcpol-logout" type="button" onclick="logoutBCPOL()">Salir</button></div></div>
+<div id="app-header"><div class="header-inner"><a class="brand" href="#inicio"><img src="LOGO BC POL CUADRADO PNG.png" alt="BCPOL"><div class="brand-copy"><strong>BCPOL</strong><span>PREPARACIÓN POLICÍA LOCAL · ANDALUCÍA</span></div></a><button class="menu-btn" onclick="toggleMenu()" aria-label="Abrir menú">☰</button><nav id="nav"><ul><li><a href="#inicio">Inicio</a></li><li><a href="#apuntes">Apuntes</a></li><li><a href="examenes.html">Exámenes</a></li><li id="bcpol-admin-nav" style="display:none"><a href="control-alumnos.html">Control de alumnos</a></li><li><a href="#enlaces">Enlaces</a></li><li><a href="#documentos">Documentos</a></li><li><a href="#nubeclases">Drive</a></li><li><a href="#calendario">Calendario</a></li><li><a href="#convocatorias">Convocatorias</a></li><li><a href="#comunidad">Comunidad</a></li></ul></nav><button class="bcpol-logout" type="button" onclick="logoutBCPOL()">Salir</button></div></div>
 <div id="app-main">
 <section id="inicio" class="hero"><img class="hero-bg" src="hero-bcpol-sevilla-final.png" alt="Policía Local de espaldas ante el paisaje urbano"><div class="hero-overlay"></div><div class="hero-inner"><div class="eyebrow">Preparación específica de supuestos prácticos</div><h1>BCPOL<br><span>A por tu plaza</span></h1><p>BCPOL está especializado en la <strong>preparación de supuestos prácticos para Policía Local de Andalucía</strong>: casos, normativa, procedimientos y resolución aplicada al examen.</p><div class="hero-actions"><a class="hero-btn aula-featured" href="aula.html" aria-label="Entrar al Aula Virtual BCPOL, clases semanales"><span class="aula-icon" aria-hidden="true">🎓</span><span class="aula-cta-copy"><strong>AULA VIRTUAL BCPOL</strong><small>Accede a tus clases semanales</small></span><span class="aula-arrow" aria-hidden="true">↗</span></a><a class="hero-btn primary" href="#apuntes">Empezar a estudiar&nbsp; →</a><a class="hero-btn aula-featured planning-featured" href="mi-preparador.html" aria-label="Abrir Planning de Estudio BCPOL, plan semanal y seguimiento"><span class="aula-icon" aria-hidden="true"><svg width="46" height="46" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="8" width="36" height="34" rx="5" fill="#FFFFFF" stroke="#17334C" stroke-width="2.4"/><path d="M6.3 13C6.3 10.9 8 9.2 10.1 9.2H35.9C38 9.2 39.7 10.9 39.7 13V19H6.3V13Z" fill="#EF6054"/><path d="M13.5 5.5V12M31.5 5.5V12" stroke="#17334C" stroke-width="3.2" stroke-linecap="round"/><g fill="#BBC6D0"><rect x="11" y="23" width="6" height="5" rx="1"/><rect x="21" y="23" width="6" height="5" rx="1"/><rect x="31" y="23" width="6" height="5" rx="1"/><rect x="11" y="32" width="6" height="5" rx="1"/><rect x="21" y="32" width="6" height="5" rx="1"/></g><circle cx="36" cy="36" r="10" fill="#2AAA60" stroke="#FFFFFF" stroke-width="2"/><path d="M31.5 36L35 39.2L40.7 33.2" stroke="#FFFFFF" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="aula-cta-copy"><strong>PLANNING DE ESTUDIO</strong><small>Plan semanal y seguimiento</small></span><span class="aula-arrow" aria-hidden="true">↗</span></a><a class="hero-btn secondary" href="#recursos">Ver recursos</a></div><div class="hero-badges"><span class="hero-badge">Documentación</span><span class="hero-badge">Apuntes</span><span class="hero-badge">Supuestos</span><span class="hero-badge">Actualidad legislativa</span></div></div></section>
 <main>
 <section class="section" id="recursos"><div class="section-head"><div><div class="kicker">Acceso rápido</div><h2>Todo BCPOL, en un solo lugar</h2></div><p>Accede directamente a tus herramientas y materiales desde una única página, sin cadenas de menús.</p></div><div class="quick-grid">
 <a class="quick" href="#apuntes"><span class="qicon"><img src="bcpol-case.svg" alt=""></span><strong>Apuntes</strong><small>Temario por materias</small></a>
-<a class="quick" href="examenes.html"><span class="qicon"><img src="bcpol-document.svg" alt=""></span><strong>Exámenes oficiales</strong><small>Por año, municipio y materias</small></a>
+<a class="quick" href="examenes.html"><span class="qicon"><img src="bcpol-document.svg" alt=""></span><strong>Exámenes oficiales</strong><small>Por año, municipio y materias</small></a><a class="quick" id="bcpol-admin-shortcut" href="control-alumnos.html" style="display:none"><span class="qicon">📊</span><strong>Control de alumnos</strong><small>Seguimiento privado del preparador</small></a>
 <a class="quick" href="#supuesto"><span class="qicon"><img src="bcpol-target.svg" alt=""></span><strong>Supuesto semanal</strong><small>Banco de casos prácticos</small></a>
 <a class="quick" href="#documentos"><span class="qicon"><img src="bcpol-document.svg" alt=""></span><strong>Documentos</strong><small>Legislación y codificados</small></a>
 <a class="quick" href="mi-preparador.html"><span class="qicon"><img src="bcpol-calendar.svg" alt=""></span><strong>Planning de estudio</strong><small>Plan semanal y seguimiento</small></a>
@@ -620,13 +620,22 @@ footer{margin-top:70px;background:var(--navy);color:#b9cada}.footer-inner{width:
 
 const BCPOL_AUTH_ENDPOINT = 'https://axgbiqbyserypsbtwnjr.supabase.co/functions/v1/bcpol-web-auth';
 const BCPOL_SESSION_KEY = 'bcpol_session_v2';
+function setControlAlumnosVisible(username) {
+  const visible = username === 'bcpol';
+  for (const id of ['bcpol-admin-nav', 'bcpol-admin-shortcut']) {
+    const element = document.getElementById(id);
+    if (element) element.style.display = visible ? '' : 'none';
+  }
+}
 function hideBCPOL() {
+  setControlAlumnosVisible('');
   document.body.classList.add('no-access');
   document.getElementById('login').style.display = 'block';
   document.getElementById('app-header').style.display = 'none';
   document.getElementById('app-main').style.display = 'none';
 }
-function showBCPOL() {
+function showBCPOL(username) {
+  setControlAlumnosVisible(username);
   document.getElementById('login').style.display = 'none';
   document.getElementById('app-header').style.display = 'block';
   document.getElementById('app-main').style.display = 'block';
@@ -656,7 +665,7 @@ async function checkPass() {
     sessionStorage.setItem(BCPOL_SESSION_KEY, session.token);
     document.getElementById('pass').value = '';
     notice.textContent = '';
-    showBCPOL();
+    showBCPOL(session.username || user);
     if (window.BCPOLNovedades) window.BCPOLNovedades.revisar(session.username || user, session.token);
   } catch (err) {
     notice.textContent = err.message || 'No se ha podido verificar el acceso.';
@@ -682,7 +691,7 @@ window.addEventListener('DOMContentLoaded', async function() {
   if (!token) return;
   try {
     const verificada = await bcpolAuth({ action: 'verify', token });
-    showBCPOL();
+    showBCPOL(verificada.username);
     if (window.BCPOLNovedades) window.BCPOLNovedades.revisar(verificada.username, token);
   } catch (_) {
     sessionStorage.removeItem(BCPOL_SESSION_KEY);
