@@ -60,6 +60,13 @@ h1{margin:6px 0 10px;font-size:clamp(2rem,4vw,3.1rem);letter-spacing:-.04em}
 footer{text-align:center;padding:30px 15px;color:var(--muted);font-size:.75rem}
 @media(max-width:960px){.controls{grid-template-columns:repeat(2,minmax(0,1fr))}.search-field,.case-field{grid-column:span 2}}
 @media(max-width:650px){.top{padding:12px 16px}.back{font-size:.72rem;padding:10px}main{padding:26px 13px 45px}.panel{padding:18px}.controls{grid-template-columns:1fr}.search-field,.case-field{grid-column:span 1}.item{display:block;padding:15px}.item h3{font-size:.89rem}.actions{margin-top:14px}.btn{width:100%;min-height:46px}.summary{align-items:flex-start;flex-wrap:wrap}.view-switch button{flex:1}}
+.progress-title{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.exam-progress progress{width:100%;height:14px;accent-color:#1676ca;margin:10px 0}
+.exam-progress small{color:var(--muted)}
+.actions{flex-direction:column;gap:8px;align-items:stretch}
+.seen-label{display:flex;align-items:center;justify-content:center;gap:8px;font-weight:700;min-height:38px;cursor:pointer}
+.seen-label input{width:19px;height:19px;accent-color:#1676ca}
+.save-error{max-width:220px;color:#972c20;font-size:.8rem}
 </style>
 </head>
 <body>
@@ -70,6 +77,7 @@ footer{text-align:center;padding:30px 15px;color:var(--muted);font-size:.75rem}
   <p class="subtitle">Busca exámenes por año, municipio, materias y casuísticas reales. Combina dos materias para localizar pruebas que incluyan ambas y abre el PDF original desde Google Drive.</p>
   <div id="status" role="status">Comprobando tu acceso y cargando los exámenes…</div>
   <section id="library" hidden>
+    <div class="panel exam-progress"><div class="progress-title"><strong>MI PROGRESO EN EXÁMENES</strong><strong id="seenPercent"></strong></div><progress id="seenBar" max="100" value="0" aria-label="Progreso en exámenes oficiales"></progress><small id="seenCount" aria-live="polite"></small></div>
     <div class="panel">
       <nav class="view-switch" aria-label="Cómo ver los exámenes">
         <button type="button" data-view="anio" aria-pressed="true">📅 Por año</button>
@@ -102,6 +110,33 @@ const token=sessionStorage.getItem("bcpol_session_v2");
 const $=id=>document.getElementById(id);
 const collator=new Intl.Collator("es",{sensitivity:"base"});
 let docs=[],view="anio";
+let seen=new Set();
+const saving=new Set(), errors=new Map();
+function updateProgress(){
+ const count=docs.filter(d=>seen.has(d.id)).length;
+ const percent=docs.length?Math.round(100*count/docs.length):0;
+ $("seenPercent").textContent=percent+"%";
+ $("seenBar").value=percent;
+ $("seenCount").textContent=count+" de "+docs.length+" exámenes vistos · "+(docs.length-count)+" pendientes";
+}
+function syncMark(id){
+ const input=$("seen-"+id);
+ if(!input)return;
+ input.checked=seen.has(id);
+ input.disabled=saving.has(id);
+ $("error-"+id).textContent=errors.get(id)||"";
+}
+async function mark(id,next){
+ if(saving.has(id))return;
+ saving.add(id);errors.delete(id);syncMark(id);
+ try{
+  const response=await fetch(endpoint,{method:"POST",credentials:"omit",cache:"no-store",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"mark",token,examen_id:id,visto:next})});
+  if(!response.ok || (await response.json()).ok!==true)throw Error();
+  if(next)seen.add(id);else seen.delete(id);
+  updateProgress();
+ }catch(_){errors.set(id,"No se ha confirmado el cambio. Vuelve a intentarlo.");}
+ finally{saving.delete(id);syncMark(id);}
+}
 const normalize=s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
 const cases=[
  {id:"alcoholemia",label:"Alcoholemia y etilómetros",re:/alcoholemia|etilometro|impregnacion alcoholica|mg\/l|tasa de alcohol/},
@@ -207,6 +242,14 @@ function render(){
      card.append(info);
      const actions=elem("div","actions"),url=safeDrive(d.drive_url);
      if(url){const a=elem("a","btn","📄 Ver examen");a.href=url;a.target="_blank";a.rel="noopener noreferrer";a.setAttribute("aria-label","Abrir PDF: "+d.titulo);actions.append(a);}
+     const label=elem("label","seen-label"),input=elem("input");
+     input.type="checkbox";input.id="seen-"+d.id;input.checked=seen.has(d.id);input.disabled=saving.has(d.id);
+     input.setAttribute("aria-label","Examen visto: "+d.titulo);
+     input.addEventListener("change",()=>mark(d.id,input.checked));
+     label.append(input,document.createTextNode("Examen visto"));
+     const error=elem("span","save-error",errors.get(d.id)||"");
+     error.id="error-"+d.id;error.setAttribute("role","status");
+     actions.append(label,error);
      card.append(actions);frag.append(card);
    }
  }
@@ -222,6 +265,8 @@ async function init(){
   const data=await r.json().catch(()=>({}));
   if(!r.ok||data.ok!==true||!Array.isArray(data.examenes))throw Error(r.status===401?"Tu sesión ha caducado. Entra de nuevo en BCPOL.":data.error||"No se pudo cargar el catálogo.");
   docs=data.examenes.filter(x=>Number.isInteger(x.id)&&Number.isInteger(x.anio)&&typeof x.municipio==="string"&&typeof x.titulo==="string"&&Array.isArray(x.materias));
+  if(!Array.isArray(data.vistos))throw Error("No se pudo cargar tu progreso. Vuelve a entrar en los exámenes.");
+  seen=new Set(data.vistos);updateProgress();
   selectOptions("year",[...new Set(docs.map(d=>d.anio))].sort((a,b)=>b-a));
   selectOptions("city",[...new Set(docs.map(d=>d.municipio))].sort(collator.compare));
   const subjects=[...new Set(docs.flatMap(d=>d.materias))].sort(collator.compare);
