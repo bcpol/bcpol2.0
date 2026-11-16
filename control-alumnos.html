@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Control de alumnos | BCPOL</title>
+<link rel="icon" href="LOGO BC POL CUADRADO PNG.png">
+<style>
+:root{--navy:#06182b;--navy2:#103756;--blue:#197fe5;--gold:#d7b15e;--ink:#17293e;--muted:#66778a;--bg:#f2f6fa;--line:#dce6ef;--green:#15836a;--card:#fff}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#eef5fb,#f7f9fc);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:var(--ink);min-height:100vh}
+a{color:inherit}.top{background:linear-gradient(125deg,#06182b,#113c62);color:#fff;padding:20px max(20px,calc((100vw - 1280px)/2));display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;box-shadow:0 10px 32px #06182b25}
+.brand{display:flex;align-items:center;gap:14px;text-decoration:none}.brand img{width:52px;height:52px;object-fit:contain;background:#fff;border-radius:14px;padding:3px}.brand strong{display:block;font-size:20px;letter-spacing:.035em}.brand small{display:block;color:#c8d9eb;font-size:12px;letter-spacing:.07em;margin-top:3px}.top-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.btn{border:1px solid var(--line);background:#fff;border-radius:12px;padding:11px 15px;color:var(--ink);font-size:13px;font-weight:750;cursor:pointer;min-height:42px;transition:.16s;white-space:nowrap}.btn:hover{transform:translateY(-1px);border-color:#b0c6df}.btn:focus-visible,.control:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #55adff;outline-offset:2px}.btn:disabled{opacity:.5;cursor:wait}.top .btn{border-color:#47627d;background:#ffffff15;color:#fff}.top .btn.primary{background:var(--gold);color:#152a40;border-color:var(--gold)}.wrap{max-width:1320px;margin:auto;padding:30px 20px 65px}
+.eyebrow{font-size:12px;font-weight:850;text-transform:uppercase;letter-spacing:.16em;color:#2371b9}.heading{display:flex;align-items:end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin:12px 0 22px}.heading h1{margin:0 0 10px;font-size:clamp(28px,4vw,42px);letter-spacing:-.035em;color:#0a2745}.heading p{margin:0;color:var(--muted);line-height:1.6;max-width:780px;font-size:14px}.stamp{font-size:12px;color:#66778a;white-space:nowrap}
+.notice{padding:17px 20px;border:1px solid #c9d8e9;background:#fff;border-radius:16px;margin:18px 0;line-height:1.55;color:#3d5469}.notice.error{border-color:#f2c4c4;color:#9b2929}.notice.hidden{display:none}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px;margin-bottom:22px}
+.metric{background:#fff;border:1px solid var(--line);padding:20px 22px;border-radius:18px;box-shadow:0 6px 24px #0b30500a}.metric small{display:block;color:#63768a;font-weight:700;font-size:12px;margin-bottom:11px}.metric strong{font-size:36px;color:#0a2d4c;line-height:1;letter-spacing:-.03em}.metric span{display:block;color:#6c7a88;font-size:12px;margin-top:9px}.metric.accent{background:linear-gradient(135deg,#0c3154,#0e4c7d);border-color:#0c3154}.metric.accent strong,.metric.accent small,.metric.accent span{color:#fff}.metric.accent small,.metric.accent span{opacity:.85}
+.surface{background:#fff;border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:0 12px 40px #1236570c}
+.bar{display:flex;align-items:end;justify-content:space-between;flex-wrap:wrap;gap:14px;padding:20px 22px;border-bottom:1px solid var(--line)}
+.bar h2{font-size:19px;margin:0 0 5px;letter-spacing:-.02em}.bar p{font-size:13px;color:var(--muted);margin:0}.tools{display:flex;align-items:center;flex-wrap:wrap;gap:9px}.tools input,.tools select{border:1px solid #d1deeb;border-radius:10px;padding:10px 11px;font-size:13px;background:#f9fcfe;color:var(--ink);min-height:41px}.tools input{min-width:180px}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}table{border-collapse:collapse;width:100%;min-width:950px;font-size:13px}th{text-align:left;font-size:11px;letter-spacing:.065em;text-transform:uppercase;color:#65788a;background:#f7fafc;border-bottom:1px solid var(--line);padding:14px 15px;white-space:nowrap}td{border-bottom:1px solid #eaf0f5;padding:16px 15px;vertical-align:middle}tbody tr:hover{background:#f9fcff}tbody tr:last-child td{border-bottom:0}.user{font-weight:800;color:#0d3154}.sub{font-size:12px;color:#708195;margin-top:5px}.mono{font-variant-numeric:tabular-nums}.pill{font-size:11px;border-radius:8px;font-weight:800;padding:6px 8px;display:inline-block;background:#ecf5ff;color:#1968a9}.pill.gray{background:#f2f4f7;color:#647283}.pill.green{background:#e3f5ed;color:#16805e}.track{height:7px;overflow:hidden;border-radius:12px;background:#e8eff6;min-width:95px;margin-top:7px}.fill{height:100%;background:linear-gradient(90deg,#2689ec,#1aaf9c);border-radius:12px}.mini{width:115px}.mini div{display:flex;justify-content:space-between;gap:9px;font-size:11px}.mini .track{height:6px;margin-top:5px}.control{border:1px solid #a9cdef;background:#eef7ff;color:#17598c;border-radius:9px;padding:8px 11px;cursor:pointer;font-weight:800;font-size:12px}.control:hover{background:#deeffe}.empty{text-align:center;color:#687c90;padding:32px}.foot{padding:17px 20px;background:#f7fafc;border-top:1px solid var(--line);font-size:12px;color:#65788a;line-height:1.7}.foot strong{color:#1c405e}
+.overlay{position:fixed;inset:0;background:#05182bbf;z-index:10;display:none;align-items:stretch;justify-content:flex-end}.overlay.open{display:flex}.drawer{width:min(620px,100%);height:100%;background:#fff;overflow:auto;box-shadow:-18px 0 70px #0002}.drawer-head{position:sticky;top:0;background:#0b2b49;color:#fff;padding:22px 24px;display:flex;justify-content:space-between;gap:12px;align-items:center;z-index:2}.drawer-head h2{margin:6px 0 0;font-size:25px}.drawer-head small{color:#bfd5ea}.close{border:1px solid #58718a;background:#ffffff1a;border-radius:10px;color:#fff;font-size:22px;width:42px;height:42px;cursor:pointer}.drawer-body{padding:24px}.detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.tile{padding:14px;border:1px solid var(--line);border-radius:13px;background:#f9fbfe}.tile small{display:block;color:#62758a;font-size:11px;font-weight:700}.tile strong{display:block;margin-top:8px;font-size:22px;color:#0a3557}.section-title{font-size:15px;font-weight:850;margin:25px 0 12px;color:#103a60}.details{list-style:none;margin:0;padding:0}.details li{padding:12px 2px;border-bottom:1px solid #ebf0f4;font-size:13px;line-height:1.5}.details li span{display:block;color:#7c8997;font-size:11px;margin-top:3px}.muted{font-size:13px;color:#7a8794;line-height:1.55}.rowline{margin-top:10px;font-size:13px;line-height:1.5}.rowline strong{color:#103a60}
+@media(max-width:900px){.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.bar{align-items:stretch}.tools{width:100%}.tools input{flex:1}.heading{align-items:start}}
+@media(max-width:560px){.top{padding:14px 17px}.brand img{width:43px;height:43px}.brand strong{font-size:17px}.brand small{font-size:10px}.top-actions{width:100%;display:grid;grid-template-columns:1fr 1fr}.top .btn{text-align:center;padding:10px 8px}.wrap{padding:25px 12px 40px}.metrics{gap:9px}.metric{padding:17px 14px}.metric strong{font-size:30px}.metric small{font-size:11px}.bar{padding:17px 14px}.tools{display:grid;grid-template-columns:1fr 1fr}.tools input{grid-column:1/-1;width:100%}.tools select{width:100%;max-width:100%}.detail-grid{gap:8px}.drawer-body{padding:17px}.drawer-head{padding:17px}}
+</style>
+</head>
+<body>
+<header class="top">
+<a href="index.html" class="brand"><img src="LOGO BC POL CUADRADO PNG.png" alt="BCPOL"><span><strong>BCPOL · CONTROL DE ALUMNOS</strong><small>ÁREA PRIVADA DE ADMINISTRACIÓN</small></span></a>
+<div class="top-actions"><a class="btn" href="index.html" style="text-decoration:none">← Volver a BCPOL</a><button class="btn primary" type="button" id="refresh" disabled>↻ Actualizar datos</button></div>
+</header>
+<main class="wrap">
+<div class="eyebrow">Seguimiento académico · BCPOL</div>
+<div class="heading"><div><h1>Progreso de tus alumnos</h1><p>Consulta las marcas de apuntes estudiados, los exámenes oficiales vistos y los objetivos del planning. Los datos se consultan directamente en BCPOL y son de solo lectura.</p></div><span class="stamp" id="updated"></span></div>
+<div class="notice" id="notice" role="status">Comprobando permisos de administración…</div>
+<div id="dashboard" hidden>
+<section class="metrics" aria-label="Resumen de alumnos">
+<div class="metric accent"><small>CUENTAS DE ALUMNOS</small><strong id="m-students">—</strong><span>Registradas en BCPOL</span></div>
+<div class="metric"><small>HAN MARCADO APUNTES</small><strong id="m-reading">—</strong><span id="m-reading-desc">Con progreso registrado</span></div>
+<div class="metric"><small>PLANNING CONFIGURADO</small><strong id="m-plans">—</strong><span>Objetivo de estudio personal</span></div>
+<div class="metric"><small>HAN MARCADO EXÁMENES</small><strong id="m-exams">—</strong><span>Exámenes oficiales vistos</span></div>
+</section>
+<section class="surface">
+<div class="bar"><div><h2>Seguimiento individual</h2><p id="count">Alumnos registrados</p></div><div class="tools"><input type="search" id="search" placeholder="Buscar usuario…" aria-label="Buscar alumno"><select id="filter" aria-label="Filtrar alumnos"><option value="all">Todos los alumnos</option><option value="reading">Con apuntes estudiados</option><option value="none">Sin apuntes estudiados</option><option value="planning">Con planning configurado</option><option value="exams">Con exámenes vistos</option></select><select id="sort" aria-label="Ordenar alumnos"><option value="name">Usuario (A–Z)</option><option value="progress">Más apuntes estudiados</option><option value="recent">Última marca registrada</option><option value="exams">Más exámenes vistos</option></select><button class="btn" type="button" id="export">Exportar CSV</button></div></div>
+<div class="scroll"><table><thead><tr><th>Alumno</th><th>Apuntes estudiados</th><th>Tráfico</th><th>Administrativa</th><th>Seguridad</th><th>Exámenes</th><th>Planning</th><th>Última marca</th><th>Detalle</th></tr></thead><tbody id="students"></tbody></table></div>
+<div class="foot"><strong>Importante:</strong> «Estudiado» y «visto» son marcas realizadas por el propio alumno, no pruebas de lectura ni de asistencia. El planning muestra su objetivo diario configurado, no horas efectivamente trabajadas. La última marca corresponde exclusivamente a apuntes; no representa la última conexión a la web.</div>
+</section></div>
+</main>
+<div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="drawer-title" aria-hidden="true"><aside class="drawer"><div class="drawer-head"><div><small>FICHA INDIVIDUAL DEL ALUMNO</small><h2 id="drawer-title">—</h2></div><button class="close" type="button" id="close" aria-label="Cerrar ficha">×</button></div><div class="drawer-body" id="drawer-body"></div></aside></div>
+<script>
+(function(){
+"use strict";
+const ROOT="https://axgbiqbyserypsbtwnjr.supabase.co/functions/v1/";
+const KEY="bcpol_session_v2";
+const NAMES={trafico:"Tráfico",administrativa:"Policía Administrativa",seguridad:"Seguridad Ciudadana"};
+const DAYS=["L","M","X","J","V","S","D"];
+const $=id=>document.getElementById(id);
+let snapshot=null;
+let shown=[];
+function esc(value){return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function number(x){return Number(x||0).toLocaleString("es-ES");}
+function dt(value){if(!value)return "—";const d=new Date(value);return isNaN(d.getTime())?"—":d.toLocaleDateString("es-ES",{day:"2-digit",month:"short",year:"numeric",timeZone:"Europe/Madrid"});}
+function pct(a,b){return b>0?Math.min(100,Math.round(1000*a/b)/10):0;}
+function message(s,bad){$("notice").textContent=s;$("notice").className="notice"+(bad?" error":"");$("notice").hidden=false;}
+function hideMessage(){$("notice").hidden=true;}
+async function post(slug,body){const res=await fetch(ROOT+slug,{method:"POST",mode:"cors",credentials:"omit",cache:"no-store",referrerPolicy:"no-referrer",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});const data=await res.json().catch(()=>({}));if(!res.ok||!data.ok)throw new Error(data.error||"No se pudo recuperar la información");return data;}
+async function load(){
+  const token=sessionStorage.getItem(KEY);
+  if(!token){$("dashboard").hidden=true;message("Inicia sesión con tu cuenta de administrador en la web BCPOL antes de acceder a esta página.",true);return;}
+  $("refresh").disabled=true;$("dashboard").hidden=true;message("Comprobando sesión y recuperando el progreso…",false);
+  try{
+    const check=await post("bcpol-web-auth",{action:"verify",token});
+    if(check.username!=="bcpol")throw new Error("Este apartado es exclusivo de la cuenta administradora BCPOL.");
+    const data=await post("bcpol-control-alumnos",{action:"snapshot",token});
+    snapshot=data;$("dashboard").hidden=false;hideMessage();$("refresh").disabled=false;
+    $("updated").textContent="Actualizado: "+new Date(data.consultado_en).toLocaleString("es-ES",{timeZone:"Europe/Madrid"});
+    $("m-students").textContent=number(data.resumen.alumnos);
+    $("m-reading").textContent=number(data.resumen.con_apuntes);
+    $("m-reading-desc").textContent=number(data.resumen.marcas_apuntes)+" apuntes marcados";
+    $("m-plans").textContent=number(data.resumen.con_planning);
+    $("m-exams").textContent=number(data.resumen.con_examenes);
+    render();
+  }catch(e){$("refresh").disabled=false;message(e.message||"No se pudo consultar el seguimiento.",true);}
+}
+function mini(count,total){return '<div class="mini"><div><span class="mono">'+number(count)+' / '+number(total)+'</span><span>'+pct(count,total)+' %</span></div><div class="track"><div class="fill" style="width:'+pct(count,total)+'%"></div></div></div>';}
+function render(){
+if(!snapshot)return;
+const q=$("search").value.trim().toLocaleLowerCase("es");
+const filter=$("filter").value;const sort=$("sort").value;
+shown=snapshot.alumnos.filter(a=>a.username.toLocaleLowerCase("es").includes(q)&&(
+  filter==="all"||(filter==="reading"&&a.total_apuntes>0)||(filter==="none"&&a.total_apuntes===0)||
+  (filter==="planning"&&!!a.perfil)||(filter==="exams"&&a.examenes_vistos>0)
+));
+if(sort==="progress")shown.sort((a,b)=>b.total_apuntes-a.total_apuntes||a.username.localeCompare(b.username,"es"));
+else if(sort==="recent")shown.sort((a,b)=>(b.ultima_marca||"").localeCompare(a.ultima_marca||"")||a.username.localeCompare(b.username,"es"));
+else if(sort==="exams")shown.sort((a,b)=>b.examenes_vistos-a.examenes_vistos||a.username.localeCompare(b.username,"es"));
+else shown.sort((a,b)=>a.username.localeCompare(b.username,"es"));
+$("count").textContent=shown.length+" de "+snapshot.resumen.alumnos+" cuentas · "+snapshot.totales.apuntes+" apuntes y "+snapshot.totales.examenes+" exámenes en catálogo";
+$("students").innerHTML=shown.length?shown.map(a=>'<tr><td><div class="user">'+esc(a.username)+'</div><div class="sub">'+(a.total_apuntes>0?"Con progreso registrado":"Sin marcas de apuntes")+'</div></td>'+
+'<td><strong class="mono">'+number(a.total_apuntes)+' / '+number(snapshot.totales.apuntes)+'</strong><div class="track" style="width:130px"><div class="fill" style="width:'+pct(a.total_apuntes,snapshot.totales.apuntes)+'%"></div></div><div class="sub">'+pct(a.total_apuntes,snapshot.totales.apuntes)+' %</div></td>'+
+['trafico','administrativa','seguridad'].map(k=>'<td>'+mini(a.apuntes[k],snapshot.totales[k])+'</td>').join('')+
+'<td><strong class="mono">'+number(a.examenes_vistos)+'</strong> <span class="sub">/ '+number(snapshot.totales.examenes)+'</span></td>'+
+'<td>'+(a.perfil?'<span class="pill green">Configurado</span><div class="sub">'+number(a.perfil.minutos_diarios)+' min/día objetivo</div>':'<span class="pill gray">No configurado</span>')+'</td>'+
+'<td class="mono">'+esc(dt(a.ultima_marca))+'</td><td><button type="button" class="control" data-user="'+esc(a.username)+'">Ver detalle</button></td></tr>').join(''):'<tr><td colspan="9" class="empty">No hay alumnos que coincidan con los filtros.</td></tr>';
+}
+function details(user){
+const a=snapshot?.alumnos.find(x=>x.username===user);if(!a)return;
+$("drawer-title").textContent=a.username;
+const p=a.perfil;
+let html='<div class="detail-grid">'+
+'<div class="tile"><small>APUNTES ESTUDIADOS</small><strong>'+number(a.total_apuntes)+' / '+number(snapshot.totales.apuntes)+'</strong></div>'+
+'<div class="tile"><small>PROGRESO DEL TEMARIO</small><strong>'+pct(a.total_apuntes,snapshot.totales.apuntes)+' %</strong></div>'+
+'<div class="tile"><small>EXÁMENES VISTOS</small><strong>'+number(a.examenes_vistos)+' / '+number(snapshot.totales.examenes)+'</strong></div>'+
+'<div class="tile"><small>ÚLTIMA MARCA DE APUNTE</small><strong style="font-size:16px">'+esc(dt(a.ultima_marca))+'</strong></div></div>'+
+'<div class="section-title">Planificación personal</div>';
+if(p){html+='<div class="rowline"><strong>Objetivo diario:</strong> '+number(p.minutos_diarios)+' minutos</div>'+
+'<div class="rowline"><strong>Días configurados:</strong> '+esc((p.dias_estudio||[]).map(i=>DAYS[i]||"?").join(" · "))+'</div>'+
+'<div class="rowline"><strong>Nivel:</strong> '+esc(p.nivel)+'</div>'+
+'<div class="rowline"><strong>Fecha objetivo de examen:</strong> '+esc(p.fecha_examen||"No indicada")+'</div>'+
+'<div class="rowline"><strong>Último cambio del planning:</strong> '+esc(dt(p.actualizado_en))+'</div>';}
+else html+='<p class="muted">Este alumno no ha configurado su planning personal.</p>';
+for(const k of ["trafico","administrativa","seguridad"]){
+const docs=a.detalle_apuntes.filter(x=>x.materia===k).sort((x,y)=>String(x.tema_id).localeCompare(String(y.tema_id),"es",{numeric:true}));
+html+='<div class="section-title">'+esc(NAMES[k])+' · '+number(docs.length)+' / '+number(snapshot.totales[k])+' apuntes</div>';
+html+=docs.length?'<ul class="details">'+docs.map(d=>'<li><strong>'+esc(d.tema_id)+'. '+esc(d.titulo)+'</strong><span>Marcado como estudiado: '+esc(dt(d.estudiado_en))+'</span></li>').join('')+'</ul>':'<p class="muted">Sin apuntes marcados en esta materia.</p>';
+}
+html+='<div class="section-title">Exámenes oficiales vistos · '+number(a.examenes_vistos)+'</div>';
+html+=a.detalle_examenes.length?'<ul class="details">'+a.detalle_examenes.map(d=>'<li><strong>'+esc(d.titulo)+'</strong><span>'+esc(d.municipio)+' · '+esc(d.anio??"")+'</span></li>').join('')+'</ul>':'<p class="muted">Sin exámenes marcados como vistos.</p>';
+$("drawer-body").innerHTML=html;$("overlay").classList.add("open");$("overlay").setAttribute("aria-hidden","false");document.body.style.overflow="hidden";$("close").focus();
+}
+function close(){$("overlay").classList.remove("open");$("overlay").setAttribute("aria-hidden","true");document.body.style.overflow="";}
+function csvCell(x){return '"'+String(x??"").replace(/^[=+\-@\t\r]/,"'$&").replace(/"/g,'""')+'"';}
+function exportCSV(){
+if(!snapshot)return;
+const head=["Alumno","Apuntes estudiados","Apuntes totales","Progreso %","Tráfico","Administrativa","Seguridad Ciudadana","Exámenes vistos","Planning configurado","Objetivo minutos/día","Días estudio","Nivel","Última marca de apunte"];
+const lines=[head.map(csvCell).join(";")];
+for(const a of shown){const p=a.perfil;lines.push([a.username,a.total_apuntes,snapshot.totales.apuntes,a.porcentaje,a.apuntes.trafico,a.apuntes.administrativa,a.apuntes.seguridad,a.examenes_vistos,p?"Sí":"No",p?.minutos_diarios??"",p?.dias_estudio?.map(i=>DAYS[i]).join("-")||"",p?.nivel||"",a.ultima_marca||""].map(csvCell).join(";"));}
+const blob=new Blob(["\uFEFF"+lines.join("\r\n")],{type:"text/csv;charset=utf-8"});
+const a=document.createElement("a");const url=URL.createObjectURL(blob);a.href=url;a.download="bcpol-control-alumnos-"+new Date().toISOString().slice(0,10)+".csv";document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+$("students").addEventListener("click",e=>{const b=e.target.closest("button[data-user]");if(b)details(b.dataset.user);});
+["search","filter","sort"].forEach(id=>$(id).addEventListener(id==="search"?"input":"change",render));
+$("refresh").addEventListener("click",load);$("export").addEventListener("click",exportCSV);$("close").addEventListener("click",close);
+$("overlay").addEventListener("click",e=>{if(e.target===$("overlay"))close();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("overlay").classList.contains("open"))close();});
+load();
+})();
+</script>
+</body></html>
