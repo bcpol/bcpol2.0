@@ -26,9 +26,10 @@ h1{margin:6px 0 10px;font-size:clamp(2rem,4vw,3.1rem);letter-spacing:-.04em}
 .view-switch{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px}
 .view-switch button{font:inherit;font-size:.84rem;font-weight:850;border:1px solid #c9dbe9;border-radius:12px;background:#fff;color:var(--ink);padding:12px 18px;cursor:pointer}
 .view-switch button[aria-pressed="true"]{background:#0a3155;color:#fff;border-color:#0a3155}
-.controls{display:grid;grid-template-columns:minmax(200px,2fr) repeat(3,minmax(145px,1fr));gap:11px;margin-top:16px}
+.controls{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin-top:16px}.search-field,.case-field{grid-column:span 2}
 .controls label{display:block;font-size:.7rem;font-weight:800;color:#60778a;margin:0 0 6px}
 .controls input,.controls select{width:100%;border:1px solid #cad9e6;border-radius:12px;background:#fff;color:var(--ink);padding:13px 12px;font:inherit;font-size:.85rem;min-height:48px}
+.quick-filters{border-top:1px solid var(--line);margin-top:18px;padding-top:15px}.quick-heading{display:flex;align-items:center;flex-wrap:wrap;gap:7px 14px;margin-bottom:10px}.quick-heading strong{font-size:.7rem;letter-spacing:.04em;color:#526e86}.quick-heading span{font-size:.72rem;color:#62788c}.quick-chips{display:flex;flex-wrap:wrap;gap:8px}.quick-chip{font:inherit;font-weight:800;font-size:.76rem;color:#145381;border:1px solid #c6dced;background:#f5faff;border-radius:999px;padding:9px 12px;min-height:40px;cursor:pointer}.quick-chip:hover,.quick-chip:focus-visible{border-color:#197fe5;outline-offset:2px}.quick-chip[aria-pressed="true"]{background:#0a3155;border-color:#0a3155;color:#fff}.quick-count{opacity:.8;margin-left:3px;font-variant-numeric:tabular-nums}.applied{flex:1;min-width:120px;font-size:.76rem;color:#145381}.applied:empty{display:none}.topic.match{background:#dcf4ea;border-color:#98d7b9;color:#16523b}
 .summary{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;color:var(--muted);font-size:.85rem}
 .summary strong{color:var(--navy)}
 .reset{background:none;border:0;color:#0c65ac;font-weight:800;font-size:.8rem;cursor:pointer;text-decoration:underline}
@@ -57,8 +58,8 @@ h1{margin:6px 0 10px;font-size:clamp(2rem,4vw,3.1rem);letter-spacing:-.04em}
 #status a{color:#0b69b9;font-weight:800}
 [hidden]{display:none!important}
 footer{text-align:center;padding:30px 15px;color:var(--muted);font-size:.75rem}
-@media(max-width:960px){.controls{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:650px){.top{padding:12px 16px}.back{font-size:.72rem;padding:10px}main{padding:26px 13px 45px}.panel{padding:18px}.controls{grid-template-columns:1fr}.item{display:block;padding:15px}.item h3{font-size:.89rem}.actions{margin-top:14px}.btn{width:100%;min-height:46px}.summary{align-items:flex-start;flex-wrap:wrap}.view-switch button{flex:1}}
+@media(max-width:960px){.controls{grid-template-columns:repeat(2,minmax(0,1fr))}.search-field,.case-field{grid-column:span 2}}
+@media(max-width:650px){.top{padding:12px 16px}.back{font-size:.72rem;padding:10px}main{padding:26px 13px 45px}.panel{padding:18px}.controls{grid-template-columns:1fr}.search-field,.case-field{grid-column:span 1}.item{display:block;padding:15px}.item h3{font-size:.89rem}.actions{margin-top:14px}.btn{width:100%;min-height:46px}.summary{align-items:flex-start;flex-wrap:wrap}.view-switch button{flex:1}}
 </style>
 </head>
 <body>
@@ -66,7 +67,7 @@ footer{text-align:center;padding:30px 15px;color:var(--muted);font-size:.75rem}
 <main>
   <span class="eyebrow">Biblioteca de supuestos · Policía Local de Andalucía</span>
   <h1>EXÁMENES OFICIALES</h1>
-  <p class="subtitle">Consulta los exámenes por año o por municipio, identifica las materias incluidas en cada supuesto y abre el PDF original desde Google Drive.</p>
+  <p class="subtitle">Busca exámenes por año, municipio, materias y casuísticas reales. Combina dos materias para localizar pruebas que incluyan ambas y abre el PDF original desde Google Drive.</p>
   <div id="status" role="status">Comprobando tu acceso y cargando los exámenes…</div>
   <section id="library" hidden>
     <div class="panel">
@@ -75,14 +76,20 @@ footer{text-align:center;padding:30px 15px;color:var(--muted);font-size:.75rem}
         <button type="button" data-view="municipio" aria-pressed="false">🏛️ Por municipio</button>
       </nav>
       <div class="controls">
-        <div><label for="search">BUSCADOR</label><input id="search" type="search" placeholder="Buscar examen, municipio o materia…" autocomplete="off"></div>
+        <div class="search-field"><label for="search">BUSCADOR</label><input id="search" type="search" placeholder="Municipio, tema o expresión concreta…" autocomplete="off"></div>
         <div><label for="year">AÑO</label><select id="year"><option value="">Todos los años</option></select></div>
         <div><label for="city">MUNICIPIO</label><select id="city"><option value="">Todos los municipios</option></select></div>
-        <div><label for="subject">MATERIA</label><select id="subject"><option value="">Todas las materias</option></select></div>
+        <div><label for="subject">MATERIA PRINCIPAL</label><select id="subject"><option value="">Todas las materias</option></select></div>
+        <div><label for="subject2">COMBINAR CON OTRA MATERIA</label><select id="subject2"><option value="">Sin segunda materia</option></select></div>
+        <div class="case-field"><label for="case">CASUÍSTICA CONCRETA</label><select id="case"><option value="">Todas las casuísticas</option></select></div>
       </div>
-      <p class="note">Las fichas con <strong>materias revisadas</strong> se han contrastado con el enunciado y las preguntas del PDF original. Las demás muestran todavía una clasificación preliminar y pueden contener omisiones. Los documentos mantienen sus permisos originales de Google Drive.</p>
+      <div class="quick-filters">
+        <div class="quick-heading"><strong>ACCESOS RÁPIDOS</strong><span>Coincidencias según los demás filtros seleccionados</span></div>
+        <div class="quick-chips" id="quickCases" role="group" aria-label="Filtrar por casuísticas frecuentes"></div>
+      </div>
+      <p class="note">Las casuísticas se detectan mediante coincidencias en las descripciones verificadas de cada examen; son una ayuda de búsqueda, no una clasificación adicional. Al combinar dos materias, ambas aparecen en el mismo examen, aunque no necesariamente en la misma pregunta. Los PDF conservan sus permisos originales de Google Drive.</p>
     </div>
-    <div class="summary"><strong id="count" aria-live="polite"></strong><button class="reset" type="button" id="reset">Limpiar filtros</button></div>
+    <div class="summary"><strong id="count" aria-live="polite"></strong><span id="applied" class="applied" aria-live="polite"></span><button class="reset" type="button" id="reset">Limpiar filtros</button></div>
     <div class="list" id="list"></div>
   </section>
 </main>
@@ -96,6 +103,29 @@ const $=id=>document.getElementById(id);
 const collator=new Intl.Collator("es",{sensitivity:"base"});
 let docs=[],view="anio";
 const normalize=s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+const cases=[
+ {id:"alcoholemia",label:"Alcoholemia y etilómetros",re:/alcoholemia|etilometro|impregnacion alcoholica|mg\/l|tasa de alcohol/},
+ {id:"hosteleria",label:"Hostelería y espectáculos",re:/hosteleria|discoteca|\bpub\b|velador|terraza|establecimiento de esparcimiento|espectaculo|aforo|actividad recreativa|horario de cierre|horario de apertura/},
+ {id:"siniestros",label:"Siniestros viales",re:/siniestro vial|accidente de trafico|accidente vial|colision|atropell|accidente entre vehiculos|accidente de circulacion/},
+ {id:"drogas",label:"Drogas",re:/hachis|cannabis|marihuana|droga|estupefaciente|psicotropica|cocaina|heroina/},
+ {id:"itv",label:"ITV",re:/\bitv\b|inspeccion tecnica de vehicul|tarjeta de inspeccion tecnica|revision itv/},
+ {id:"detencion",label:"Detenciones y garantías",re:/detencion|detenid|habeas corpus|derechos del detenido/},
+ {id:"seguro",label:"Seguro obligatorio",re:/seguro obligatorio|sin seguro|seguro sin efecto|falta de seguro|aseguramiento|\bsoa\b/},
+ {id:"patrimoniales",label:"Delitos patrimoniales",re:/hurto|robo|sustraccion|estafa|apropiacion indebida|patrimonial/},
+ {id:"vmp",label:"VMP y patinetes",re:/\bvmp\b|patinete|movilidad personal/},
+ {id:"veladores",label:"Veladores y terrazas",re:/velador|terraza/},
+ {id:"animales",label:"Animales",re:/\bperro|\banimal|\bcaballo|\brebano|\bgallo|\bganado/},
+ {id:"venta",label:"Venta ambulante",re:/venta ambulante|vendedor ambulante|mercadillo|venta callejera/},
+ {id:"vigencia",label:"Pérdida de vigencia del permiso",re:/perdida de vigencia|perdida total de puntos|agotamiento de puntos|perdida de puntos/},
+ {id:"menores",label:"Menores",re:/\bmenor(es)?\b|adolescente|nino|nina/}
+];
+const quickCaseIds=["alcoholemia","siniestros","hosteleria","drogas","itv","vmp"];
+const byCase=id=>cases.find(c=>c.id===id);
+const textMatchesCase=(t,c)=>c.re.test(normalize(t));
+const matchesCase=(d,id)=>{
+ const c=byCase(id);
+ return !!c && Array.isArray(d.materias_detalladas) && d.materias_detalladas.some(t=>textMatchesCase(t,c));
+};
 const elem=(tag,cls,txt)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!==undefined)e.textContent=txt;return e};
 function safeDrive(url){
  try{const u=new URL(url);return u.protocol==="https:"&&u.hostname==="drive.google.com"&&/^\/file\/d\/[A-Za-z0-9_-]+\/view$/.test(u.pathname)?u.href:null}catch(_){return null}
@@ -116,13 +146,37 @@ function setView(next){
  document.querySelectorAll("[data-view]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.view===view)));
  render();
 }
-function filtered(){
- const q=normalize($("search").value.trim()),year=$("year").value,city=$("city").value,sub=$("subject").value;
- return docs.filter(d=>(!year||String(d.anio)===year)&&(!city||d.municipio===city)&&(!sub||d.materias.includes(sub))&&(!q||normalize([d.titulo,d.municipio,d.anio,...d.materias,...(Array.isArray(d.materias_detalladas)?d.materias_detalladas:[])].join(" ")).includes(q)));
+function baseFiltered(){
+ const words=normalize($("search").value.trim()).split(/\s+/).filter(Boolean);
+ const year=$("year").value,city=$("city").value,sub=$("subject").value,sub2=$("subject2").value;
+ return docs.filter(d=>(!year||String(d.anio)===year)
+  &&(!city||d.municipio===city)
+  &&(!sub||d.materias.includes(sub))
+  &&(!sub2||d.materias.includes(sub2))
+  &&(!words.length||words.every(w=>normalize([d.titulo,d.municipio,d.anio,...d.materias,...(Array.isArray(d.materias_detalladas)?d.materias_detalladas:[])].join(" ")).includes(w))));
+}
+function filtered(base){
+ const which=$("case").value;
+ return which?base.filter(d=>matchesCase(d,which)):base;
+}
+function renderQuickCases(base){
+ const frag=document.createDocumentFragment();
+ for(const id of quickCaseIds){
+  const c=byCase(id),n=base.filter(d=>matchesCase(d,id)).length;
+  const button=elem("button","quick-chip");
+  button.type="button";
+  button.setAttribute("aria-pressed",String($("case").value===id));
+  button.append(document.createTextNode(c.label+" "),elem("span","quick-count",String(n)));
+  button.addEventListener("click",()=>{$("case").value=$("case").value===id?"":id;render()});
+  frag.append(button);
+ }
+ $("quickCases").replaceChildren(frag);
 }
 function render(){
- const found=filtered();
+ const base=baseFiltered(),found=filtered(base);
+ renderQuickCases(base);
  $("count").textContent=found.length+" de "+docs.length+" exámenes";
+ $("applied").textContent=$("case").value?"Casuística: "+byCase($("case").value).label:"";
  const grouped=new Map();
  for(const d of found){
    const key=view==="anio"?String(d.anio):d.municipio;
@@ -146,7 +200,7 @@ function render(){
      info.append(elem("div","topic-title",revisado?"Materias concretas del supuesto":"Materias del supuesto"));
      const topics=elem("div","topics");
      const nombres=revisado?d.materias_detalladas:d.materias;
-     if(nombres.length){for(const t of nombres)topics.append(elem("span","topic",t));}
+     if(nombres.length){const active=byCase($("case").value);for(const t of nombres){const hit=Boolean(revisado&&active&&textMatchesCase(t,active));topics.append(elem("span","topic"+(hit?" match":""),t));}}
      else topics.append(elem("span","topic pending","Materias pendientes de clasificar"));
      info.append(topics);
      info.append(elem("small","item-verification"+(revisado?" revisado":""),revisado?"✓ Materias contrastadas con el PDF original":"Clasificación preliminar · pendiente de revisión individual"));
@@ -159,8 +213,8 @@ function render(){
  $("list").replaceChildren(frag);
 }
 document.querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>setView(b.dataset.view)));
-["search","year","city","subject"].forEach(id=>$(id).addEventListener(id==="search"?"input":"change",render));
-$("reset").addEventListener("click",()=>{["search","year","city","subject"].forEach(id=>$(id).value="");render()});
+["search","year","city","subject","subject2","case"].forEach(id=>$(id).addEventListener(id==="search"?"input":"change",render));
+$("reset").addEventListener("click",()=>{["search","year","city","subject","subject2","case"].forEach(id=>$(id).value="");render()});
 async function init(){
  if(!token){fail("Para ver los exámenes oficiales necesitas iniciar sesión.");return;}
  try{
@@ -170,7 +224,10 @@ async function init(){
   docs=data.examenes.filter(x=>Number.isInteger(x.id)&&Number.isInteger(x.anio)&&typeof x.municipio==="string"&&typeof x.titulo==="string"&&Array.isArray(x.materias));
   selectOptions("year",[...new Set(docs.map(d=>d.anio))].sort((a,b)=>b-a));
   selectOptions("city",[...new Set(docs.map(d=>d.municipio))].sort(collator.compare));
-  selectOptions("subject",[...new Set(docs.flatMap(d=>d.materias))].sort(collator.compare));
+  const subjects=[...new Set(docs.flatMap(d=>d.materias))].sort(collator.compare);
+  selectOptions("subject",subjects);
+  selectOptions("subject2",subjects);
+  for(const c of cases){const op=document.createElement("option");op.value=c.id;op.textContent=c.label;$("case").append(op)}
   $("status").hidden=true;$("library").hidden=false;render();
  }catch(e){fail(e.message||"No se pudo cargar el catálogo.");}
 }
