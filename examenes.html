@@ -74,7 +74,7 @@ footer{text-align:center;padding:30px 15px;color:var(--muted);font-size:.75rem}
 <main>
   <span class="eyebrow">Biblioteca de supuestos · Policía Local de Andalucía</span>
   <h1>EXÁMENES OFICIALES</h1>
-  <p class="subtitle">Busca exámenes por año, municipio, materias y casuísticas reales. Combina dos materias para localizar pruebas que incluyan ambas y abre el PDF original desde Google Drive.</p>
+  <p class="subtitle">Busca exámenes por provincia, año, municipio, materias y casuísticas reales. Combina dos materias para localizar pruebas que incluyan ambas y abre el PDF original desde Google Drive.</p>
   <div id="status" role="status">Comprobando tu acceso y cargando los exámenes…</div>
   <section id="library" hidden>
     <div class="panel exam-progress"><div class="progress-title"><strong>MI PROGRESO EN EXÁMENES</strong><strong id="seenPercent"></strong></div><progress id="seenBar" max="100" value="0" aria-label="Progreso en exámenes oficiales"></progress><small id="seenCount" aria-live="polite"></small></div>
@@ -86,6 +86,7 @@ footer{text-align:center;padding:30px 15px;color:var(--muted);font-size:.75rem}
       <div class="controls">
         <div class="search-field"><label for="search">BUSCADOR</label><input id="search" type="search" placeholder="Municipio, tema o expresión concreta…" autocomplete="off"></div>
         <div><label for="year">AÑO</label><select id="year"><option value="">Todos los años</option></select></div>
+        <div><label for="province">PROVINCIA</label><select id="province"><option value="">Todas las provincias</option></select></div>
         <div><label for="city">MUNICIPIO</label><select id="city"><option value="">Todos los municipios</option></select></div>
         <div><label for="subject">MATERIA PRINCIPAL</label><select id="subject"><option value="">Todas las materias</option></select></div>
         <div><label for="subject2">COMBINAR CON OTRA MATERIA</label><select id="subject2"><option value="">Sin segunda materia</option></select></div>
@@ -138,6 +139,25 @@ async function mark(id,next){
  finally{saving.delete(id);syncMark(id);}
 }
 const normalize=s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+// Correspondencia de los municipios que integran el catálogo actual de exámenes oficiales.
+const provinceGroups={
+ "Almería": "ABLA|ALMERÍA|BALANEGRA|BENAHADUZ|EL EJIDO|FIÑANA|GÁDOR|MOJÁCAR|OLULA DEL RÍO|ROQUETAS DE MAR|SORBAS|VÉLEZ RUBIO|VERA|VIATOR",
+ "Cádiz": "ALCALÁ DE LOS GAZULES|ALCALÁ DEL VALLE|ALGECIRAS|ARCOS DE LA FRONTERA|BARBATE|BENALUP - CASAS VIEJAS|CASTELLAR DE LA FRONTERA|CHIPIONA|CONIL DE LA FRONTERA|EL PUERTO DE SANTA MARÍA|ESPERA|JIMENA DE LA FRONTERA|LA LÍNEA|LA LÍNEA DE LA CONCEPCIÓN|MEDINA SIDONIA|PUERTO REAL|ROTA|SAN FERNANDO|SAN ROQUE|TARIFA|TREBUJENA|UBRIQUE|VILLAMARTÍN",
+ "Córdoba": "AGUILAR DE LA FRONTERA|ALMODÓVAR DEL RÍO|BAENA|BUJALANCE|CAÑETE DE LAS TORRES|CÓRDOBA|DOÑA MENCÍA|FERNÁN NÚÑEZ|FUENTE PALMERA|HINOJOSA DEL DUQUE|LA CARLOTA|LUQUE|MONTALBÁN|MORILES|PALMA DEL RÍO|PEDRO ABAD|POSADAS|PRIEGO DE CÓRDOBA|PUENTE GENIL|RUTE|VILLA DEL RÍO|VILLAFRANCA DE CÓRDOBA",
+ "Granada": "ALBOLOTE|ALHAMA DE GRANADA|ALHENDÍN|ALMUÑÉCAR|ARMILLA|BAZA|CANILES|CENES DE LA VEGA|CIJUELA|CUEVAS DEL CAMPO|CÚLLAR|CÚLLAR VEGA|DARRO|GÓJAR|GRANADA|GUADIX|GUALCHOS|HUÉTOR TÁJAR|ÍLLORA|LAS GABIAS|LOJA|MONACHIL|MONTEFRÍO|MONTEJÍCAR|MOTRIL|OGÍJARES|ÓRGIVA|PINOS PUENTE|POLOPOS-LA MAMOLA|SALOBREÑA|SANTA FE|ZAFARRAYA|ZAGRA",
+ "Huelva": "ALJARAQUE|ALMONASTER LA REAL|ALMONTE|CARTAYA|GIBRALEÓN|ISLA CRISTINA|LEPE|MOGUER|PUNTA UMBRÍA|ROCIANA DEL CONDADO|TRIGUEROS|VILLARRASA",
+ "Jaén": "ALCALÁ LA REAL|ALCAUDETE|ANDÚJAR|ARJONA|ARJONILLA|BAEZA|BAILÉN|BEDMAR Y GARCÍEZ|BEGÍJAR|BÉLMEZ DE LA MORALEDA|CAMBIL|CASTELLAR|CAZORLA|CHILLUÉVAR|HUELMA|IBROS|JAÉN|JÓDAR|LA CAROLINA|LINARES|LUPIÓN|MANCHA REAL|MARTOS|MENGÍBAR|PORCUNA|POZO ALCÓN|SANTO TOMÉ|TORREDELCAMPO|TORREDONJIMENO|TORREPEROGIL|VALDEPEÑAS DE JAÉN|VILLACARRILLO",
+ "Málaga": "ALGARROBO|ALMARGEN|ÁLORA|ARCHIDONA|ARRIATE|BENALMÁDENA|BENAMOCARRA|CÁRTAMA|COLMENAR|CUEVAS BAJAS|CUEVAS DEL BECERRO|ESTEPONA|FRIGILIANA|FUENGIROLA|ISTÁN|MÁLAGA|MARBELLA|MIJAS|MOLLINA|MONDA|NERJA|OJÉN|RINCÓN DE LA VICTORIA|RONDA|TORROX|VÉLEZ-MÁLAGA",
+ "Sevilla": "ALBAIDA DEL ALJARAFE|ALCALÁ DEL RÍO|ARAHAL|BRENES|BURGUILLOS|CAMAS|CANTILLANA|CARMONA|CORIA DEL RÍO|DOS HERMANAS|EL PALMAR DE TROYA|EL RUBIO|EL VISO DEL ALCOR|ESTEPA|GUILLENA|HERRERA|ISLA MAYOR|LA CAMPANA|LA PUEBLA DE CAZALLA|LA PUEBLA DEL RÍO|LA RINCONADA|LEBRIJA|LORA DEL RÍO|LOS PALACIOS Y VILLAFRANCA|MAIRENA DEL ALCOR|OLIVARES|OSUNA|PEDRERA|PILAS|SAN JUAN DE AZNALFARACHE|SANTIPONCE|SEVILLA|TOMARES|UTRERA|VALENCINA|VALENCINA DE LA CONCEPCIÓN|VILLAVERDE DEL RÍO"
+};
+const municipalityProvince=new Map(Object.entries(provinceGroups).flatMap(([province,cities])=>cities.split("|").map(city=>[normalize(city),province])));
+const provinceOf=city=>municipalityProvince.get(normalize(city))||"";
+function refreshCities(){
+ const province=$("province").value,previous=$("city").value;
+ $("city").replaceChildren(new Option("Todos los municipios",""));
+ selectOptions("city",[...new Set(docs.filter(d=>!province||provinceOf(d.municipio)===province).map(d=>d.municipio))].sort(collator.compare));
+ if([...$("city").options].some(o=>o.value===previous))$("city").value=previous;
+}
 const cases=[
  {id:"alcoholemia",label:"Alcoholemia y etilómetros",re:/alcoholemia|etilometro|impregnacion alcoholica|mg\/l|tasa de alcohol/},
  {id:"hosteleria",label:"Hostelería y espectáculos",re:/hosteleria|discoteca|\bpub\b|velador|terraza|establecimiento de esparcimiento|espectaculo|aforo|actividad recreativa|horario de cierre|horario de apertura/},
@@ -183,8 +203,9 @@ function setView(next){
 }
 function baseFiltered(){
  const words=normalize($("search").value.trim()).split(/\s+/).filter(Boolean);
- const year=$("year").value,city=$("city").value,sub=$("subject").value,sub2=$("subject2").value;
+ const year=$("year").value,province=$("province").value,city=$("city").value,sub=$("subject").value,sub2=$("subject2").value;
  return docs.filter(d=>(!year||String(d.anio)===year)
+  &&(!province||provinceOf(d.municipio)===province)
   &&(!city||d.municipio===city)
   &&(!sub||d.materias.includes(sub))
   &&(!sub2||d.materias.includes(sub2))
@@ -257,7 +278,8 @@ function render(){
 }
 document.querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>setView(b.dataset.view)));
 ["search","year","city","subject","subject2","case"].forEach(id=>$(id).addEventListener(id==="search"?"input":"change",render));
-$("reset").addEventListener("click",()=>{["search","year","city","subject","subject2","case"].forEach(id=>$(id).value="");render()});
+$("province").addEventListener("change",()=>{refreshCities();render()});
+$("reset").addEventListener("click",()=>{["search","year","province","city","subject","subject2","case"].forEach(id=>$(id).value="");refreshCities();render()});
 async function init(){
  if(!token){fail("Para ver los exámenes oficiales necesitas iniciar sesión.");return;}
  try{
@@ -268,7 +290,8 @@ async function init(){
   if(!Array.isArray(data.vistos))throw Error("No se pudo cargar tu progreso. Vuelve a entrar en los exámenes.");
   seen=new Set(data.vistos);updateProgress();
   selectOptions("year",[...new Set(docs.map(d=>d.anio))].sort((a,b)=>b-a));
-  selectOptions("city",[...new Set(docs.map(d=>d.municipio))].sort(collator.compare));
+  selectOptions("province",Object.keys(provinceGroups));
+  refreshCities();
   const subjects=[...new Set(docs.flatMap(d=>d.materias))].sort(collator.compare);
   selectOptions("subject",subjects);
   selectOptions("subject2",subjects);
