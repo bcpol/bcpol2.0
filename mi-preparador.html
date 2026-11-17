@@ -289,9 +289,9 @@ function estimatedMinutes(doc,kind,weights,marked){
  // Regla pedagógica orientativa: unos 7 min/página más 12 min de asimilación,
  // modulados por la importancia del contenido en los supuestos oficiales.
  // Sin número de páginas confirmado, usar una estimación neutra y explicitarlo.
- const raw=(hasPages?12+Math.min(40,pages)*7:45)*(0.85+(weight-2)*0.15);
+ const raw=(hasPages?12+pages*7:45)*(0.85+(weight-2)*0.15);
  const factor=kind==="REPASO"||marked?0.45:kind==="AMPLIACIÓN"?0.75:1;
- return Math.max(15,Math.min(180,Math.round(raw*factor/5)*5));
+ return Math.max(15,Math.min(720,Math.round(raw*factor/5)*5));
 }
 function timeContext(doc,weights){
  const pages=Number(doc.paginas),known=Number.isInteger(pages)&&pages>0&&pages<=500;
@@ -446,7 +446,10 @@ function renderPlan(){
   if(caseMinutes){makeCaseTask(box,caseMinutes);usedCount++;}
   const limit=m<45?1:m<90?2:m<150?3:5;
   const leftDays=Math.max(1,studyDays.filter(d=>d.iso>=day.iso).length);
-  const classCapacity=Math.max(1,Math.ceil(priority.length/leftDays));
+  // Distribuir la carga semanal en minutos (no en número de documentos):
+  // un tema de 30 páginas no debe contar igual que uno de una página.
+  const priorityPending=priority.reduce((sum,d)=>sum+left(marks.has(keyDoc(d))?"REPASO":"CLASE",d),0);
+  const priorityQuota=Math.max(15,Math.ceil(priorityPending/leftDays));
   // Mantener los minutos pendientes de cada apunte de una jornada a otra.
   // No considerar estudiado un documento por recibir un tramo de 40-45 minutos.
   const assign=(queue,type,comment)=>{
@@ -461,11 +464,12 @@ function renderPlan(){
    budget-=slot;usedCount++;
    return true;
   };
-  let assignedPriority=0;
-  while(priority.length&&budget>=15&&usedCount<limit&&assignedPriority<classCapacity){
+  let assignedPriorityMinutes=0;
+  while(priority.length&&budget>=15&&usedCount<limit&&assignedPriorityMinutes<priorityQuota){
    const d=priority[0],type=marks.has(keyDoc(d))?"REPASO":"CLASE";
+   const before=budget;
    if(!assign(priority,type,"Prioridad del supuesto semanal"))break;
-   assignedPriority++;
+   assignedPriorityMinutes+=before-budget;
   }
   if(budget>=15&&usedCount<limit&&supplement.length&&(!priority.length||m>=150))
    assign(supplement,"AMPLIACIÓN","Casuística relacionada con la clase");
