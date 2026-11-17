@@ -278,6 +278,27 @@ function examScore(doc,pesos,nivel){
  const n=Number(doc.tema_id);
  return base*100+(nivel==="inicio"&&n<=15?12:0)-(Number.isFinite(n)?n/1000:0);
 }
+
+function importance(doc,weights){
+ const raw=Number(weights?.[doc.materia]?.[doc.tema_id]);
+ return Number.isInteger(raw)&&raw>=2&&raw<=5?raw:3;
+}
+function estimatedMinutes(doc,kind,weights,marked){
+ const pages=Number(doc.paginas),hasPages=Number.isInteger(pages)&&pages>0&&pages<=500;
+ const weight=importance(doc,weights);
+ // Regla pedagógica orientativa: unos 7 min/página más 12 min de asimilación,
+ // modulados por la importancia del contenido en los supuestos oficiales.
+ // Sin número de páginas confirmado, usar una estimación neutra y explicitarlo.
+ const raw=(hasPages?12+Math.min(40,pages)*7:45)*(0.85+(weight-2)*0.15);
+ const factor=kind==="REPASO"||marked?0.45:kind==="AMPLIACIÓN"?0.75:1;
+ return Math.max(15,Math.min(180,Math.round(raw*factor/5)*5));
+}
+function timeContext(doc,weights){
+ const pages=Number(doc.paginas),known=Number.isInteger(pages)&&pages>0&&pages<=500;
+ const weight=importance(doc,weights);
+ const label=weight>=5?"muy alta":weight===4?"alta":weight===3?"media":"moderada";
+ return (known?pages+" "+(pages===1?"página":"páginas"):"páginas pendientes de verificar")+" · importancia "+label;
+}
 function renderPlan(){
  if(!planData)return;
  const w=planData.semana,docs=Array.isArray(planData.catalogo)?planData.catalogo:[],marks=new Map((planData.progreso||[]).map(p=>[keyDoc(p),p.estudiado_en]));
@@ -308,10 +329,11 @@ function renderPlan(){
     out.push({...d,archivo_clase_url:typeof p.archivo_clase_url==="string"?p.archivo_clase_url:null,titulo_clase:typeof p.titulo_clase==="string"?p.titulo_clase:null});allKeys.add(k);
    }return out;};
   core=pick(w.lecturas);extra=pick(w.ampliaciones);
-  core.sort((a,b)=>Number(marks.has(keyDoc(a)))-Number(marks.has(keyDoc(b))));
+  core.sort((a,b)=>Number(marks.has(keyDoc(a)))-Number(marks.has(keyDoc(b)))||examScore(b,weights,level)-examScore(a,weights,level));
   for(const d of core){
    const card=node("div",null,"study-note"),info=node("div"),actions=node("div",null,"links");
    info.append(node("strong",d.titulo_clase||d.titulo),node("small",(subjectNames[d.materia]||d.materia)+" · "+(marks.has(keyDoc(d))?"Ya estudiado: repasar para el supuesto":"Pendiente de estudiar")));
+   info.append(node("small",timeContext(d,weights)+" · "+estimatedMinutes(d,marks.has(keyDoc(d))?"REPASO":"CLASE",weights,marks.has(keyDoc(d)))+" min orientativos"));
    docLink(actions,d,"Ver apunte");
    if(d.audio_url){const au=safeDriveUrl(d.audio_url);if(au){const a=node("a","Escuchar podcast","note-link");a.href=au;a.target="_blank";a.rel="noopener noreferrer";actions.append(a);}}
    addStudyToggle(actions,d,marks);
@@ -356,6 +378,10 @@ function renderPlan(){
   agenda.append(node("p","No hay un día de estudio seleccionado antes de la clase para trabajar el supuesto. Ajusta tu disponibilidad si quieres incluirlo.","week-help"));
  }
  const priority=[...core],supplement=[...extra],rev=[...reviews],autonomy=[...pending];
+ const remaining=new Map();
+ const timeKey=(type,d)=>type+":"+keyDoc(d);
+ const planned=(type,d)=>estimatedMinutes(d,type,weights,marks.has(keyDoc(d)));
+ const left=(type,d)=>remaining.has(timeKey(type,d))?remaining.get(timeKey(type,d)):planned(type,d);
  // Se reservan los repasos del día de clase ANTES de asignar los de los demás días.
  // Si no hay apuntes previamente marcados, solo se revisan conceptos de los apuntes
  // semanales ya asignados; nunca se introduce materia nueva ese día.
@@ -367,17 +393,19 @@ function renderPlan(){
   for(const doc of candidates){
    const id=keyDoc(doc);
    if(usedReviews.has(id)||classReviews.length>=3||classReviewRemaining<15)continue;
-   const slot=Math.min(40,classReviewRemaining);
+   const slot=Math.min(planned("REPASO",doc),classReviewRemaining);
    classReviews.push({doc,minutes:slot,alreadyStudied:marks.has(id)});
    classReviewRemaining-=slot;usedReviews.add(id);
   }
   const reserved=new Set(classReviews.map(x=>keyDoc(x.doc)));
   for(let i=rev.length-1;i>=0;i--)if(reserved.has(keyDoc(rev[i])))rev.splice(i,1);
  }
- const makeTask=(container,type,d,comment,minutes)=>{
+ const makeTask=(container,type,d,comment,minutes,elapsed=0,target=null)=>{
   const row=node("div",null,"day-task"),tag=node("span",type,type==="REPASO"?"type review":type==="AMPLIACIÓN"?"type other":"type"),detail=node("div",null,"detail");
   detail.append(node("strong",d.titulo));
-  detail.append(node("small",minutes+" min · "+(subjectNames[d.materia]||d.materia)+(comment?" · "+comment:"")));
+  const total=target||planned(type,d);
+  const tramo=total>minutes?" · tramo "+(elapsed+1)+"–"+(elapsed+minutes)+" de "+total+" min estimados":"";
+  detail.append(node("small",minutes+" min · "+(subjectNames[d.materia]||d.materia)+" · "+timeContext(d,weights)+tramo+(comment?" · "+comment:"")));
   const links=node("div",null,"links");docLink(links,d,"Abrir PDF");
    addStudyToggle(links,d,marks);
   row.append(tag,detail,links);container.append(row);
@@ -419,36 +447,42 @@ function renderPlan(){
   const limit=m<45?1:m<90?2:m<150?3:5;
   const leftDays=Math.max(1,studyDays.filter(d=>d.iso>=day.iso).length);
   const classCapacity=Math.max(1,Math.ceil(priority.length/leftDays));
-  while(priority.length&&budget>=20&&usedCount<limit&&usedCount<(classCapacity+(caseMinutes?1:0))){
-   const doc=priority.shift(),slot=Math.min(45,budget);
-   makeTask(box,marks.has(keyDoc(doc))?"REPASO":"CLASE",doc,"Prioridad del supuesto semanal",slot);
+  // Mantener los minutos pendientes de cada apunte de una jornada a otra.
+  // No considerar estudiado un documento por recibir un tramo de 40-45 minutos.
+  const assign=(queue,type,comment)=>{
+   if(!queue.length||budget<15||usedCount>=limit)return false;
+   const d=queue[0],estimate=planned(type,d),remainingMinutes=left(type,d);
+   const slot=Math.min(180,budget,remainingMinutes);
+   if(slot<15)return false;
+   makeTask(box,type,d,comment,slot,estimate-remainingMinutes,estimate);
+   const next=remainingMinutes-slot;
+   if(next<=0){remaining.delete(timeKey(type,d));queue.shift();}
+   else remaining.set(timeKey(type,d),next);
    budget-=slot;usedCount++;
+   return true;
+  };
+  let assignedPriority=0;
+  while(priority.length&&budget>=15&&usedCount<limit&&assignedPriority<classCapacity){
+   const d=priority[0],type=marks.has(keyDoc(d))?"REPASO":"CLASE";
+   if(!assign(priority,type,"Prioridad del supuesto semanal"))break;
+   assignedPriority++;
   }
-  if(budget>=20&&usedCount<limit&&supplement.length&&(!priority.length||m>=150)){
-   const doc=supplement.shift(),slot=Math.min(40,budget);
-   makeTask(box,"AMPLIACIÓN",doc,"Casuística relacionada con la clase",slot);
-   budget-=slot;usedCount++;
-  }
-  if(budget>=20&&usedCount<limit&&autonomy.length){
-   const doc=autonomy.shift(),slot=Math.min(40,budget);
-   makeTask(box,"AVANCE",doc,w?"Mismo bloque semanal · prioridad estadística orientativa":"Estudio autónomo BCPOL",slot);
-   budget-=slot;usedCount++;
-  }
-  if(budget>=20&&usedCount<limit&&rev.length){
-   const doc=rev.shift(),slot=Math.min(35,budget);
-   makeTask(box,"REPASO",doc,"Contenido estudiado anteriormente · frecuencia en exámenes",slot);
-   budget-=slot;usedCount++;
-  }
-  if(budget>=20&&usedCount<limit&&!usedCount&&autonomy.length){
-   const doc=autonomy.shift(),slot=Math.min(40,budget);
-   makeTask(box,"AVANCE",doc,"Siguiente apunte pendiente",slot);
-   budget-=slot;usedCount++;
-  }
+  if(budget>=15&&usedCount<limit&&supplement.length&&(!priority.length||m>=150))
+   assign(supplement,"AMPLIACIÓN","Casuística relacionada con la clase");
+  if(budget>=15&&usedCount<limit&&autonomy.length)
+   assign(autonomy,"AVANCE",w?"Mismo bloque semanal · prioridad estadística orientativa":"Estudio autónomo BCPOL");
+  if(budget>=15&&usedCount<limit&&rev.length)
+   assign(rev,"REPASO","Contenido estudiado anteriormente · frecuencia en exámenes");
+  if(budget>=15&&usedCount<limit&&!usedCount&&autonomy.length)
+   assign(autonomy,"AVANCE","Siguiente apunte pendiente");
   if(budget>=20)box.append(node("p",budget+" min libres: completa los apuntes asignados o repasa dudas.","week-help"));
   if(!usedCount&&!autonomy.length)box.append(node("p","Repaso libre de los apuntes ya estudiados.","week-help"));
   agenda.append(box);
  });
- if(priority.length)agenda.append(node("p","Quedan "+priority.length+" apuntes de la clase sin distribuir. Amplía el tiempo disponible o estúdialos antes de avanzar a materias nuevas.","week-help"));
+ if(priority.length){
+  const missing=priority.reduce((sum,d)=>sum+left(marks.has(keyDoc(d))?"REPASO":"CLASE",d),0);
+  agenda.append(node("p","Quedan "+priority.length+" apuntes prioritarios incompletos ("+missing+" min orientativos pendientes). No se dan por estudiados; aumenta tu disponibilidad o continúa con ellos en la siguiente sesión.","week-help"));
+ }
 }
 $("profile").addEventListener("submit",async event=>{
  event.preventDefault();const days=selectedDays(),minutes=Number($("minutes").value),level=$("level").value;
