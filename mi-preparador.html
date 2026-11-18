@@ -38,6 +38,18 @@ fieldset{border:0;padding:0;margin:18px 0}legend{font-weight:800;margin:0 0 10px
 .study-note .links{display:flex;gap:8px;flex-wrap:wrap;flex-shrink:0}
 .note-link{font-size:.78rem;font-weight:800;color:#146abd;text-decoration:none}
 .note-link:hover{text-decoration:underline}
+.media-link{display:inline-flex;align-items:center;border:1px solid #cbdce9;border-radius:8px;padding:5px 8px;line-height:1.35;white-space:nowrap}
+.media-link.podcast{background:#eaf7f5;color:#126b60;border-color:#b5ded8}
+.media-link.youtube{background:#fff2f0;color:#a92a25;border-color:#efc9c3}
+.media-link:focus-visible,.media-video-menu a:focus-visible{outline:2px solid #197fe5;outline-offset:2px}
+.media-videos{position:relative;display:inline-block}
+.media-videos>summary{list-style:none;cursor:pointer}
+.media-videos>summary::-webkit-details-marker{display:none}
+.media-videos[open]>summary{background:#ffe5e0}
+.media-video-menu{position:absolute;right:0;top:calc(100% + 6px);z-index:50;width:310px;max-width:min(310px,calc(100vw - 115px));border:1px solid #dce6ef;border-radius:11px;box-shadow:0 12px 28px #06182b25;background:#fff;padding:6px}
+.media-video-menu a{display:block;padding:9px 10px;color:#173a57;text-decoration:none;font-size:.79rem;font-weight:750;line-height:1.45;border-radius:7px;white-space:normal}
+.media-video-menu a:hover,.media-video-menu a:focus-visible{background:#f0f6fc}
+@media(max-width:620px){.media-video-menu{right:auto;left:0}}
 .day-plan{display:grid;gap:10px}.day-card{border:1px solid var(--line);border-radius:14px;padding:14px;background:#fbfdff}
 .day-title{display:flex;justify-content:space-between;gap:10px;margin-bottom:9px;align-items:center}
 .day-title strong{font-size:.92rem}.day-title span{font-size:.76rem;color:var(--muted)}
@@ -268,6 +280,47 @@ function docLink(parent,d,label){
  const u=safeDriveUrl(d.archivo_clase_url)||safeDriveUrl(d.pdf_url);if(!u)return;
  const a=node("a",label||"Abrir apunte","note-link");a.href=u;a.target="_blank";a.rel="noopener noreferrer";parent.append(a);
 }
+function safeYoutubeUrl(raw){
+ try{
+  if(typeof raw!=="string")return null;
+  const u=new URL(raw);if(u.protocol!=="https:")return null;
+  if((u.hostname==="www.youtube.com"||u.hostname==="youtube.com")&&u.pathname==="/watch"&&/^[a-zA-Z0-9_-]{11}$/.test(u.searchParams.get("v")||""))return u.href;
+  if(u.hostname==="youtu.be"&&/^\/[a-zA-Z0-9_-]{11}$/.test(u.pathname))return u.href;
+  return null;
+ }catch(_){return null;}
+}
+function addMediaLinks(parent,d){
+ const audio=safeDriveUrl(d.audio_url);
+ if(audio){
+  const a=node("a","🎧 Podcast","note-link media-link podcast");
+  a.href=audio;a.target="_blank";a.rel="noopener noreferrer";
+  a.setAttribute("aria-label","Escuchar podcast del apunte: "+d.titulo);
+  if(typeof d.aviso_audio==="string"&&d.aviso_audio.trim())a.title="Aviso del podcast: "+d.aviso_audio;
+  parent.append(a);
+ }
+ const videos=(Array.isArray(d.videos_youtube)?d.videos_youtube:[]).map(v=>({
+  titulo:typeof v?.titulo==="string"&&v.titulo.trim()?v.titulo:"Vídeo BCPOL",
+  url:safeYoutubeUrl(v?.url),tipo:v?.tipo
+ })).filter(v=>!!v.url);
+ if(videos.length===1){
+  const a=node("a","▶ YouTube","note-link media-link youtube");
+  a.href=videos[0].url;a.target="_blank";a.rel="noopener noreferrer";
+  a.setAttribute("aria-label","Ver vídeo de YouTube del apunte: "+d.titulo);
+  parent.append(a);
+ }else if(videos.length>1){
+  const details=node("details",null,"media-videos");
+  const summary=node("summary","▶ YouTube ("+videos.length+")","note-link media-link youtube");
+  summary.setAttribute("aria-label","Mostrar "+videos.length+" vídeos de YouTube del apunte "+d.titulo);
+  const menu=node("div",null,"media-video-menu");
+  for(const video of videos){
+   const a=node("a",(video.tipo==="actualizacion"?"↻ ":"▶ ")+video.titulo);
+   a.href=video.url;a.target="_blank";a.rel="noopener noreferrer";
+   a.setAttribute("aria-label","Abrir "+video.titulo+" en YouTube, nueva pestaña");
+   menu.append(a);
+  }
+  details.append(summary,menu);parent.append(details);
+ }
+}
 function buildProgress(data){
  const docs=Array.isArray(data.catalogo)?data.catalogo:[];
  const marks=new Set((data.progreso||[]).map(keyDoc));
@@ -391,7 +444,7 @@ function renderPlan(){
    info.append(node("strong",d.titulo_clase||d.titulo),node("small",(subjectNames[d.materia]||d.materia)+" · "+(marks.has(keyDoc(d))?"Ya estudiado: repasar para el supuesto":"Pendiente de estudiar")));
    info.append(node("small",timeContext(d,weights)+" · "+estimatedMinutes(d,marks.has(keyDoc(d))?"REPASO":"CLASE",weights,marks.has(keyDoc(d)))+" min orientativos"));
    docLink(actions,d,"Ver apunte");
-   if(d.audio_url){const au=safeDriveUrl(d.audio_url);if(au){const a=node("a","Escuchar podcast","note-link");a.href=au;a.target="_blank";a.rel="noopener noreferrer";actions.append(a);}}
+   addMediaLinks(actions,d);
    addStudyToggle(actions,d,marks);
    card.append(info,actions);root.append(card);
   }
@@ -541,6 +594,7 @@ function renderPlan(){
    detail.append(node("small","Opcional: tiempo adicional, sin modificar tu planificación inicial.","extra-hint"));
   }
   const links=node("div",null,"links");docLink(links,shown,"Abrir PDF");
+  addMediaLinks(links,shown);
   addStudyToggle(links,shown,marks);
   if(dayISO){
    const button=node("button","↻ Otro apunte","swap-note");button.type="button";
