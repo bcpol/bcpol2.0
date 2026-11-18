@@ -45,6 +45,16 @@ h1{margin:6px 0 10px;font-size:clamp(2rem,4vw,3.1rem);letter-spacing:-.04em}
 .btn{display:inline-flex;gap:7px;align-items:center;justify-content:center;min-height:39px;border:1px solid #c7dcea;border-radius:10px;padding:9px 12px;background:#f4f9ff;color:#10446f;font-size:.77rem;font-weight:850;cursor:pointer;text-decoration:none;white-space:nowrap}
 .btn:hover{background:#e9f3fe}
 .btn.audio{background:#eaf8ff}
+.btn.youtube{background:#fff5f4;color:#a91d20;border-color:#f3cbc8}
+.btn.youtube:hover{background:#ffe8e5}
+.youtube-wrap{position:relative;max-width:100%}
+.youtube-wrap>summary{list-style:none}
+.youtube-wrap>summary::-webkit-details-marker{display:none}
+.youtube-wrap[open]>summary{background:#ffe8e5}
+.youtube-list{position:absolute;right:0;top:calc(100% + 7px);z-index:60;width:320px;max-width:min(360px,calc(100vw - 42px));background:#fff;border:1px solid #e2e8ef;border-radius:13px;box-shadow:0 14px 34px #06182b2b;padding:7px}
+.youtube-list a{display:block;color:#173a57;text-decoration:none;padding:11px 12px;border-radius:8px;font-size:.8rem;font-weight:750;white-space:normal;line-height:1.4}
+.youtube-list a:hover,.youtube-list a:focus-visible{background:#f0f6fc;outline:2px solid #89b9e7;outline-offset:-2px}
+@media(max-width:750px){.actions>.youtube-wrap{width:100%;min-width:0}.youtube-wrap>summary{width:100%;min-height:46px;padding:10px 8px;white-space:normal;text-align:center}.youtube-list{position:relative;top:auto;right:auto;width:100%;max-width:100%;margin-top:7px;box-shadow:none}.actions>.youtube-wrap:last-child:nth-child(odd){grid-column:1/-1}}
 
 .btn.mark{background:#fff;border-color:#bdd0de;min-width:120px}
 .btn.mark[aria-pressed="true"]{color:#126a3c;background:#e2f6e8;border-color:#a6d4b6}
@@ -94,6 +104,7 @@ footer{text-align:center;padding:30px 15px;color:var(--muted);font-size:.75rem}
           <option value="pending">Pendientes</option>
           <option value="done">Estudiados</option>
           <option value="audio">Con podcast</option>
+          <option value="video">Con vídeo de YouTube</option>
         </select>
       </div>
     </div>
@@ -143,6 +154,16 @@ async function api(action,payload={}){
 function safeDrive(url){
   try{const u=new URL(url);return u.protocol==="https:"&&u.hostname==="drive.google.com"&&/^\/file\/d\/[A-Za-z0-9_-]+\/view/.test(u.pathname)?u.href:null;}catch(_){return null;}
 }
+function safeYoutube(url){
+  try{
+    if(typeof url!=="string")return null;
+    const u=new URL(url);
+    if(u.protocol!=="https:")return null;
+    if((u.hostname==="www.youtube.com"||u.hostname==="youtube.com")&&u.pathname==="/watch"&&/^[a-zA-Z0-9_-]{11}$/.test(u.searchParams.get("v")||""))return u.href;
+    if(u.hostname==="youtu.be"&&/^\/[a-zA-Z0-9_-]{11}$/.test(u.pathname))return u.href;
+    return null;
+  }catch(_){return null;}
+}
 function elem(tag,cls,txt){const e=document.createElement(tag);if(cls)e.className=cls;if(txt!==undefined)e.textContent=txt;return e;}
 function setProgress(){
   const total=docs.length,studied=docs.filter(x=>done.has(x.tema_id)).length,percent=total?Math.round(100*studied/total):0;
@@ -175,7 +196,7 @@ function render(){
   const query=$("search").value.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim(),filter=$("filter").value;
   const found=docs.filter(x=>{
     const text=x.titulo.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
-    return text.includes(query)&&(filter==="all"||(filter==="pending"&&!done.has(x.tema_id))||(filter==="done"&&done.has(x.tema_id))||(filter==="audio"&&!!x.audio_url));
+    return text.includes(query)&&(filter==="all"||(filter==="pending"&&!done.has(x.tema_id))||(filter==="done"&&done.has(x.tema_id))||(filter==="audio"&&!!x.audio_url)||(filter==="video"&&Array.isArray(x.videos_youtube)&&x.videos_youtube.some(v=>safeYoutube(v?.url))));
   });
   const frag=document.createDocumentFragment();
   if(!found.length){frag.append(elem("div","panel empty","No hay apuntes que coincidan con este filtro."));}
@@ -189,6 +210,23 @@ function render(){
     const pdf=safeDrive(item.pdf_url);
     if(pdf){const a=elem("a","btn pdf","📄 PDF");a.href=pdf;a.target="_blank";a.rel="noopener noreferrer";a.setAttribute("aria-label","Ver PDF de "+item.titulo);buttons.append(a);}
     if(item.audio_url){const aud=safeDrive(item.audio_url);if(aud){const a=elem("a","btn audio","🎧 Escuchar");a.href=aud;a.target="_blank";a.rel="noopener noreferrer";a.setAttribute("aria-label","Escuchar podcast en Google Drive: "+item.titulo);buttons.append(a);}}
+    const videos=(Array.isArray(item.videos_youtube)?item.videos_youtube:[]).map(v=>({titulo:typeof v.titulo==="string"?v.titulo:"Vídeo BCPOL",url:safeYoutube(v.url),tipo:v.tipo})).filter(v=>!!v.url);
+    if(videos.length===1){
+      const a=elem("a","btn youtube","▶ YouTube");a.href=videos[0].url;a.target="_blank";a.rel="noopener noreferrer";
+      a.setAttribute("aria-label","Ver vídeo de YouTube: "+item.titulo);buttons.append(a);
+    }else if(videos.length>1){
+      const box=elem("details","youtube-wrap");
+      const summary=elem("summary","btn youtube","▶ YouTube ("+videos.length+")");
+      summary.setAttribute("aria-label","Mostrar "+videos.length+" vídeos de YouTube del apunte "+item.titulo);
+      const menu=elem("div","youtube-list");
+      videos.forEach((v,index)=>{
+        const a=elem("a",null,(index===0&&v.tipo==="principal"?"▶ ":"↻ ")+v.titulo);
+        a.href=v.url;a.target="_blank";a.rel="noopener noreferrer";
+        a.setAttribute("aria-label","Abrir "+v.titulo+" en YouTube, nueva pestaña");
+        menu.append(a);
+      });
+      box.append(summary,menu);buttons.append(box);
+    }
     const mark=elem("button","btn mark",studied?"✓ Estudiado":"○ Marcar visto");
     mark.type="button";mark.setAttribute("aria-pressed",studied?"true":"false");
     mark.setAttribute("aria-label",studied?"Desmarcar como estudiado: "+item.titulo:"Marcar como estudiado: "+item.titulo);
