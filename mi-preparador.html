@@ -69,6 +69,13 @@ fieldset{border:0;padding:0;margin:18px 0}legend{font-weight:800;margin:0 0 10px
 .mark-study:hover{background:#eaf4fc}
 .mark-study[aria-pressed="true"]{border-color:#9fcfb1;background:#e3f6e9;color:#12663e}
 .mark-study:disabled{opacity:.55;cursor:wait}
+.swap-note,.extra-study{border:1px solid #b9cadc;border-radius:9px;background:#f4f8fc;color:#164d79;padding:8px 11px;font-size:.74rem;font-weight:800;line-height:1.25;font-family:inherit;cursor:pointer}
+.swap-note:hover,.extra-study:hover{background:#e5f1ff;border-color:#8fb7df}
+.swap-note:focus-visible,.extra-study:focus-visible{outline:3px solid #197fe5;outline-offset:2px}
+.extra-study{margin-top:10px;background:#eaf5ff;color:#07538e}
+.extra-study:disabled{cursor:default;opacity:.55}
+.swapped-hint{color:#90601d!important}
+.extra-hint{font-size:.75rem;color:var(--muted);margin:8px 0 0}
 .day-task .links{display:flex;align-items:center;justify-content:flex-end;gap:9px;flex-wrap:wrap}
 #mark-notice{position:fixed;bottom:17px;left:50%;transform:translateX(-50%);max-width:min(92vw,580px);z-index:1000;background:#102f4b;color:#fff;padding:12px 18px;border-radius:12px;box-shadow:0 10px 34px #06182b44;font-size:.83rem;font-weight:750;text-align:center}
 #mark-notice.bad{background:#a12e3d}
@@ -162,6 +169,28 @@ async function post(endpoint,payload){
   }finally{clearTimeout(timeout);}
 }
 let planData=null,markInFlight=false,lastMarksSyncAt=0,marksRefreshing=false,markNoticeTimer;
+let planChoiceKey="",planChoices={swaps:{},extra:{}};
+const planAccountScope=(()=>{
+ let hash=2166136261;
+ for(const ch of token||"")hash=Math.imul(hash^ch.charCodeAt(0),16777619);
+ return (hash>>>0).toString(36);
+})();
+function loadPlanChoices(week){
+ const key="bcpol_planning_choices_v1:"+planAccountScope+":"+(week?.numero||"autonomo")+":"+(week?.fecha_clase||"sin-clase");
+ if(key===planChoiceKey)return;
+ planChoiceKey=key;planChoices={swaps:{},extra:{}};
+ try{
+  const x=JSON.parse(sessionStorage.getItem(key)||"{}");
+  if(x&&typeof x==="object"){
+   if(x.swaps&&typeof x.swaps==="object"&&!Array.isArray(x.swaps))planChoices.swaps=x.swaps;
+   if(x.extra&&typeof x.extra==="object"&&!Array.isArray(x.extra))planChoices.extra=x.extra;
+  }
+ }catch(_){/* La agenda se puede utilizar sin almacenamiento. */}
+}
+function savePlanChoices(){
+ try{if(planChoiceKey)sessionStorage.setItem(planChoiceKey,JSON.stringify(planChoices));}
+ catch(_){/* Los cambios siguen visibles durante esta visita. */}
+}
 const subjectNames=Object.fromEntries(subjects);
 function safeDriveUrl(raw){
  try{const u=new URL(raw);return u.protocol==="https:"&&u.hostname==="drive.google.com"&&/^\/file\/d\/[A-Za-z0-9_-]+\/view/.test(u.pathname)?u.href:null;}catch(_){return null;}
@@ -321,6 +350,7 @@ function weeklyStudyReviews(docs,marks,weights,level,weekDate,used){
 function renderPlan(){
  if(!planData)return;
  const w=planData.semana,docs=Array.isArray(planData.catalogo)?planData.catalogo:[],marks=new Map((planData.progreso||[]).map(p=>[keyDoc(p),p.estudiado_en]));
+ loadPlanChoices(w);
  const map=new Map(docs.map(d=>[keyDoc(d),d]));
  const root=$("class-notes"),source=$("case-source"),agenda=$("schedule");
  root.replaceChildren();source.replaceChildren();agenda.replaceChildren();
@@ -393,6 +423,70 @@ function renderPlan(){
   agenda.append(node("p","No hay un día de estudio seleccionado antes de la clase para trabajar el supuesto. Ajusta tu disponibilidad si quieres incluirlo.","week-help"));
  }
  const priority=[...core],supplement=[...extra],rev=[...reviews],autonomy=[...pending];
+ const baseScheduled=new Set();
+ const classKeys=new Set(core.map(keyDoc)),ampliationKeys=new Set(extra.map(keyDoc));
+ const extrasForDay=iso=>Array.isArray(planChoices.extra?.[iso])?planChoices.extra[iso]:[];
+ // Nunca se propone un apunte ya programado, elegido como sustituto o añadido.
+ const occupiedKeys=exceptSwap=>{
+  const keys=new Set(baseScheduled);
+  for(const [slot,entry] of Object.entries(planChoices.swaps||{}))
+   if(slot!==exceptSwap&&entry&&typeof entry.key==="string")keys.add(entry.key);
+  for(const items of Object.values(planChoices.extra||{}))
+   if(Array.isArray(items))for(const entry of items)
+    if(entry&&typeof entry.key==="string")keys.add(entry.key);
+  return keys;
+ };
+ const optionsFor=(type,original,slotId)=>{
+  const occupied=occupiedKeys(slotId),oldKey=original?keyDoc(original):null;
+  const wantReview=type==="REPASO";
+  const options=docs.filter(d=>{
+   const k=keyDoc(d);
+   return k!==oldKey&&!occupied.has(k)&&(wantReview?marks.has(k):!marks.has(k));
+  });
+  const group=d=>{
+   const k=keyDoc(d);
+   if(classKeys.has(k))return 4;
+   if(ampliationKeys.has(k))return 3;
+   if(w&&(w.bloque==="mixto"||d.materia===w.bloque))return 2;
+   return 1;
+  };
+  options.sort((a,b)=>group(b)-group(a)||examScore(b,weights,level)-examScore(a,weights,level)||keyDoc(a).localeCompare(keyDoc(b)));
+  return options;
+ };
+ const changeAssignment=(slot,type,original)=>{
+  const choices=optionsFor(type,original,slot),previous=planChoices.swaps[slot]||{};
+  if(!choices.length){markNotice("No hay otros apuntes compatibles disponibles para este bloque.");return;}
+  const tried=Array.isArray(previous.tried)?previous.tried.filter(x=>typeof x==="string"):[];
+  let pick=choices.find(d=>!tried.includes(keyDoc(d)));
+  if(!pick){tried.length=0;pick=choices[0];}
+  tried.push(keyDoc(pick));
+  planChoices.swaps[slot]={key:keyDoc(pick),tried};
+  savePlanChoices();renderPlan();
+  markNotice("Apunte sustituido únicamente en la agenda de esta semana. No se ha cambiado tu progreso.");
+ };
+ const changeExtra=(dayISO,index,doc)=>{
+  const slot="extra:"+dayISO+":"+index;
+  const choices=optionsFor("AVANCE",doc,slot);
+  if(!choices.length){markNotice("No hay más apuntes nuevos para sustituir este avance.");return;}
+  const list=extrasForDay(dayISO),entry=list[index];
+  if(!entry)return;
+  const tried=Array.isArray(entry.tried)?entry.tried.filter(x=>typeof x==="string"):[];
+  let pick=choices.find(d=>!tried.includes(keyDoc(d)));
+  if(!pick){tried.length=0;pick=choices[0];}
+  tried.push(keyDoc(pick));
+  entry.key=keyDoc(pick);entry.minutes=Math.min(30,estimatedMinutes(pick,"AVANCE",weights,false));entry.tried=tried;
+  savePlanChoices();renderPlan();markNotice("Cambiado el apunte extra de hoy.");
+ };
+ const addExtra=(dayISO)=>{
+  const list=extrasForDay(dayISO);
+  if(list.length>=6){markNotice("Ya has añadido seis apuntes extra para este día.");return;}
+  const choices=optionsFor("AVANCE",null,null);
+  if(!choices.length){markNotice("No quedan apuntes nuevos disponibles sin repetir tareas.");return;}
+  const doc=choices[0],minutes=Math.min(30,estimatedMinutes(doc,"AVANCE",weights,false));
+  if(!Array.isArray(planChoices.extra[dayISO]))planChoices.extra[dayISO]=[];
+  planChoices.extra[dayISO].push({key:keyDoc(doc),minutes,tried:[keyDoc(doc)]});
+  savePlanChoices();renderPlan();markNotice("Avance voluntario añadido: "+doc.titulo+" ("+minutes+" min).");
+ };
  const remaining=new Map();
  const timeKey=(type,d)=>type+":"+keyDoc(d);
  const planned=(type,d)=>estimatedMinutes(d,type,weights,marks.has(keyDoc(d)));
@@ -415,14 +509,35 @@ function renderPlan(){
   const reserved=new Set(classReviews.map(x=>keyDoc(x.doc)));
   for(let i=rev.length-1;i>=0;i--)if(reserved.has(keyDoc(rev[i])))rev.splice(i,1);
  }
- const makeTask=(container,type,d,comment,minutes,elapsed=0,target=null)=>{
-  const row=node("div",null,"day-task"),tag=node("span",type,type==="REPASO"?"type review":type==="AMPLIACIÓN"?"type other":"type"),detail=node("div",null,"detail");
-  detail.append(node("strong",d.titulo));
-  const total=target||planned(type,d);
-  const tramo=total>minutes?" · tramo "+(elapsed+1)+"–"+(elapsed+minutes)+" de "+total+" min estimados":"";
-  detail.append(node("small",minutes+" min · "+(subjectNames[d.materia]||d.materia)+" · "+timeContext(d,weights)+tramo+(comment?" · "+comment:"")));
-  const links=node("div",null,"links");docLink(links,d,"Abrir PDF");
-   addStudyToggle(links,d,marks);
+ const makeTask=(container,type,d,comment,minutes,elapsed=0,target=null,dayISO=null,extraIndex=null)=>{
+  const isExtra=Number.isInteger(extraIndex);
+  if(!isExtra)baseScheduled.add(keyDoc(d));
+  const slot=dayISO+"|"+type+"|"+keyDoc(d)+"|"+elapsed;
+  const current=planChoices.swaps[slot];
+  const selected=!isExtra&&current&&typeof current.key==="string"?map.get(current.key):null;
+  const compatible=selected&&(type==="REPASO"?marks.has(keyDoc(selected)):!marks.has(keyDoc(selected)));
+  const shown=compatible?selected:d;
+  const row=node("div",null,"day-task"),tag=node("span",isExtra?"EXTRA":type,type==="REPASO"?"type review":type==="AMPLIACIÓN"||isExtra?"type other":"type"),detail=node("div",null,"detail");
+  detail.append(node("strong",shown.titulo));
+  const total=compatible?planned(type,shown):target||planned(type,d);
+  const displayMinutes=Math.min(minutes,total);
+  const tramo=total>displayMinutes?" · tramo "+(compatible?1:elapsed+1)+"–"+(compatible?displayMinutes:elapsed+displayMinutes)+" de "+total+" min estimados":"";
+  detail.append(node("small",displayMinutes+" min · "+(subjectNames[shown.materia]||shown.materia)+" · "+timeContext(shown,weights)+tramo+(comment?" · "+comment:"")));
+  if(compatible){
+   const message=classKeys.has(keyDoc(d))?"Sustituye hoy a «"+d.titulo+"», que sigue siendo materia prioritaria de la clase.":"Sustituye hoy a «"+d.titulo+"»; no se marca como estudiado.";
+   detail.append(node("small",message,"swapped-hint"));
+  }else if(isExtra){
+   detail.append(node("small","Opcional: tiempo adicional, sin modificar tu planificación inicial.","extra-hint"));
+  }
+  const links=node("div",null,"links");docLink(links,shown,"Abrir PDF");
+  addStudyToggle(links,shown,marks);
+  if(dayISO){
+   const button=node("button","↻ Otro apunte","swap-note");button.type="button";
+   button.setAttribute("aria-label","Cambiar el apunte asignado para "+dayISO+": "+shown.titulo);
+   if(isExtra)button.addEventListener("click",()=>changeExtra(dayISO,extraIndex,shown));
+   else button.addEventListener("click",()=>changeAssignment(slot,type,d));
+   links.append(button);
+  }
   row.append(tag,detail,links);container.append(row);
  };
  const makeCaseTask=(container,minutes)=>{
@@ -448,7 +563,7 @@ function renderPlan(){
    row.append(tag,detail);box.append(row);
    if(extraClassReview>=15){
     classReviews.forEach(({doc,minutes,alreadyStudied})=>
-     makeTask(box,"REPASO",doc,alreadyStudied?"Apunte ya estudiado · prioridad de repaso por frecuencia en exámenes":"Revisión breve del contenido del supuesto semanal",minutes)
+     makeTask(box,"REPASO",doc,alreadyStudied?"Apunte ya estudiado · prioridad de repaso por frecuencia en exámenes":"Revisión breve del contenido del supuesto semanal",minutes,0,null,day.iso)
     );
     const allocated=classReviews.reduce((n,x)=>n+x.minutes,0);
     if(extraClassReview-allocated>0)box.append(node("p",(extraClassReview-allocated)+" min restantes para repasar dudas después de clase.","week-help"));
@@ -472,7 +587,7 @@ function renderPlan(){
    const d=queue[0],estimate=planned(type,d),remainingMinutes=left(type,d);
    const slot=Math.min(180,budget,remainingMinutes);
    if(slot<5)return false;
-   makeTask(box,type,d,comment,slot,estimate-remainingMinutes,estimate);
+   makeTask(box,type,d,comment,slot,estimate-remainingMinutes,estimate,day.iso);
    const next=remainingMinutes-slot;
    if(next<=0){remaining.delete(timeKey(type,d));queue.shift();}
    else remaining.set(timeKey(type,d),next);
@@ -494,7 +609,22 @@ function renderPlan(){
    assign(rev,"REPASO","Contenido estudiado anteriormente · frecuencia en exámenes");
   if(budget>=5&&usedCount<limit&&!usedCount&&autonomy.length)
    assign(autonomy,"AVANCE","Siguiente apunte pendiente");
-  if(budget>=20)box.append(node("p",budget+" min libres: completa los apuntes asignados o repasa dudas.","week-help"));
+  // Estudios opcionales elegidos por el alumno: no alteran la carga de clase
+  // ni el tiempo reservado para resolver el supuesto en una sola sesión.
+  const added=extrasForDay(day.iso),shownExtra=added.filter(entry=>entry&&map.has(entry.key)&&!marks.has(entry.key)&&!baseScheduled.has(entry.key));
+  let extraMinutes=0;
+  shownExtra.forEach((entry,index)=>{
+   const doc=map.get(entry.key);
+   const minutes=Math.max(5,Math.min(30,Number(entry.minutes)||30));
+   extraMinutes+=minutes;
+   makeTask(box,"EXTRA",doc,"Estudio adicional elegido por ti",minutes,0,null,day.iso,added.indexOf(entry));
+  });
+  if(budget-extraMinutes>=20)box.append(node("p",(budget-extraMinutes)+" min libres: completa los apuntes asignados o repasa dudas.","week-help"));
+  if(extraMinutes>budget)box.append(node("p","Avance extra voluntario: "+(extraMinutes-budget)+" min por encima de tu disponibilidad diaria habitual.","extra-hint"));
+  const more=node("button","＋ Avanzar estudiando","extra-study");more.type="button";
+  more.setAttribute("aria-label","Añadir otro apunte opcional para "+dateLabel);
+  more.addEventListener("click",()=>addExtra(day.iso));
+  box.append(more);
   if(!usedCount&&!autonomy.length)box.append(node("p","Repaso libre de los apuntes ya estudiados.","week-help"));
   agenda.append(box);
  });
