@@ -286,12 +286,12 @@ function importance(doc,weights){
 function estimatedMinutes(doc,kind,weights,marked){
  const pages=Number(doc.paginas),hasPages=Number.isInteger(pages)&&pages>0&&pages<=500;
  const weight=importance(doc,weights);
- // Regla pedagógica orientativa: unos 7 min/página más 12 min de asimilación,
- // modulados por la importancia del contenido en los supuestos oficiales.
- // Sin número de páginas confirmado, usar una estimación neutra y explicitarlo.
- const raw=(hasPages?12+pages*7:45)*(0.85+(weight-2)*0.15);
- const factor=kind==="REPASO"||marked?0.45:kind==="AMPLIACIÓN"?0.75:1;
- return Math.max(15,Math.min(720,Math.round(raw*factor/5)*5));
+ // Regla BCPOL ajustada: alrededor de 3 min por página y un margen pequeño
+ // para asimilación. Importancia: variación moderada (0,9–1,2), nunca duplica.
+ // La extensión se ha verificado en el catálogo; 25 min sería el respaldo.
+ const raw=(hasPages?2+pages*3:25)*(0.90+(weight-2)*0.10);
+ const factor=kind==="REPASO"||marked?0.50:kind==="AMPLIACIÓN"?0.85:1;
+ return Math.max(5,Math.min(480,Math.round(raw*factor/5)*5));
 }
 function timeContext(doc,weights){
  const pages=Number(doc.paginas),known=Number.isInteger(pages)&&pages>0&&pages<=500;
@@ -444,19 +444,19 @@ function renderPlan(){
   const caseMinutes=blocks.get(day.iso)||0;
   let budget=m-caseMinutes,usedCount=0;
   if(caseMinutes){makeCaseTask(box,caseMinutes);usedCount++;}
-  const limit=m<45?1:m<90?2:m<150?3:5;
+  const limit=m<45?2:m<90?4:m<150?8:12;
   const leftDays=Math.max(1,studyDays.filter(d=>d.iso>=day.iso).length);
   // Distribuir la carga semanal en minutos (no en número de documentos):
   // un tema de 30 páginas no debe contar igual que uno de una página.
   const priorityPending=priority.reduce((sum,d)=>sum+left(marks.has(keyDoc(d))?"REPASO":"CLASE",d),0);
-  const priorityQuota=Math.max(15,Math.ceil(priorityPending/leftDays));
+  const priorityQuota=Math.max(5,Math.ceil(priorityPending/leftDays));
   // Mantener los minutos pendientes de cada apunte de una jornada a otra.
   // No considerar estudiado un documento por recibir un tramo de 40-45 minutos.
   const assign=(queue,type,comment)=>{
-   if(!queue.length||budget<15||usedCount>=limit)return false;
+   if(!queue.length||budget<5||usedCount>=limit)return false;
    const d=queue[0],estimate=planned(type,d),remainingMinutes=left(type,d);
    const slot=Math.min(180,budget,remainingMinutes);
-   if(slot<15)return false;
+   if(slot<5)return false;
    makeTask(box,type,d,comment,slot,estimate-remainingMinutes,estimate);
    const next=remainingMinutes-slot;
    if(next<=0){remaining.delete(timeKey(type,d));queue.shift();}
@@ -465,19 +465,19 @@ function renderPlan(){
    return true;
   };
   let assignedPriorityMinutes=0;
-  while(priority.length&&budget>=15&&usedCount<limit&&assignedPriorityMinutes<priorityQuota){
+  while(priority.length&&budget>=5&&usedCount<limit&&assignedPriorityMinutes<priorityQuota){
    const d=priority[0],type=marks.has(keyDoc(d))?"REPASO":"CLASE";
    const before=budget;
    if(!assign(priority,type,"Prioridad del supuesto semanal"))break;
    assignedPriorityMinutes+=before-budget;
   }
-  if(budget>=15&&usedCount<limit&&supplement.length&&(!priority.length||m>=150))
+  if(budget>=5&&usedCount<limit&&supplement.length&&(!priority.length||m>=150))
    assign(supplement,"AMPLIACIÓN","Casuística relacionada con la clase");
-  if(budget>=15&&usedCount<limit&&autonomy.length)
+  if(budget>=5&&usedCount<limit&&autonomy.length)
    assign(autonomy,"AVANCE",w?"Mismo bloque semanal · prioridad estadística orientativa":"Estudio autónomo BCPOL");
-  if(budget>=15&&usedCount<limit&&rev.length)
+  if(budget>=5&&usedCount<limit&&rev.length)
    assign(rev,"REPASO","Contenido estudiado anteriormente · frecuencia en exámenes");
-  if(budget>=15&&usedCount<limit&&!usedCount&&autonomy.length)
+  if(budget>=5&&usedCount<limit&&!usedCount&&autonomy.length)
    assign(autonomy,"AVANCE","Siguiente apunte pendiente");
   if(budget>=20)box.append(node("p",budget+" min libres: completa los apuntes asignados o repasa dudas.","week-help"));
   if(!usedCount&&!autonomy.length)box.append(node("p","Repaso libre de los apuntes ya estudiados.","week-help"));
