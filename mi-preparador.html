@@ -299,6 +299,25 @@ function timeContext(doc,weights){
  const label=weight>=5?"muy alta":weight===4?"alta":weight===3?"media":"moderada";
  return (known?pages+" "+(pages===1?"página":"páginas"):"páginas pendientes de verificar")+" · importancia "+label;
 }
+// Selección semanal de repaso, exclusivamente entre los apuntes marcados
+// como estudiados. Evita recomendar siempre los de mayor puntuación.
+// Se mantiene estable durante una semana y rota sin repetir en la siguiente
+// mientras existan suficientes apuntes marcados.
+function weeklyStudyReviews(docs,marks,weights,level,weekDate,used){
+ const studied=docs.filter(d=>marks.has(keyDoc(d))).sort((a,b)=>
+  examScore(b,weights,level)-examScore(a,weights,level)||keyDoc(a).localeCompare(keyDoc(b))
+ );
+ if(!studied.length)return [];
+ const t=Date.parse(weekDate+"T12:00:00Z");
+ if(!Number.isFinite(t))return [];
+ const weekIndex=Math.floor((t-Date.UTC(1970,0,5))/604800000);
+ if(studied.length===1)
+  return weekIndex%2===0&&!used.has(keyDoc(studied[0]))?[studied[0]]:[];
+ const count=Math.min(4,Math.floor(studied.length/2));
+ const first=((weekIndex*count)%studied.length+studied.length)%studied.length;
+ return Array.from({length:count},(_,i)=>studied[(first+i)%studied.length])
+  .filter(d=>!used.has(keyDoc(d)));
+}
 function renderPlan(){
  if(!planData)return;
  const w=planData.semana,docs=Array.isArray(planData.catalogo)?planData.catalogo:[],marks=new Map((planData.progreso||[]).map(p=>[keyDoc(p),p.estudiado_en]));
@@ -348,11 +367,7 @@ function renderPlan(){
  const rank=(a,b)=>examScore(b,weights,level)-examScore(a,weights,level);
  let pending=docs.filter(d=>!marks.has(keyDoc(d))&&!used.has(keyDoc(d))&&(block==="mixto"||d.materia===block)).sort(rank);
  if(!pending.length)pending=docs.filter(d=>!marks.has(keyDoc(d))&&!used.has(keyDoc(d))).sort(rank);
- const reviews=docs.filter(d=>marks.has(keyDoc(d))&&!used.has(keyDoc(d))).sort((a,b)=>{
-   const age=d=>Math.max(0,(Date.now()-Date.parse(marks.get(keyDoc(d))||""))/86400000);
-   const score=d=>examScore(d,weights,level)+Math.min(60,age(d)*2);
-   return score(b)-score(a);
- });
+ const reviews=weeklyStudyReviews(docs,marks,weights,level,w?.fecha_clase||madridYmd(new Date()),used);
  const days=dateListInPeriod(w?.inicio_plan||null,end,w?.fecha_clase||null),m=mins;
  const studyDays=days.filter(d=>d.studyDay&&!d.classDay);
  const hasClass=days.some(d=>d.classDay);
@@ -382,14 +397,14 @@ function renderPlan(){
  const timeKey=(type,d)=>type+":"+keyDoc(d);
  const planned=(type,d)=>estimatedMinutes(d,type,weights,marks.has(keyDoc(d)));
  const left=(type,d)=>remaining.has(timeKey(type,d))?remaining.get(timeKey(type,d)):planned(type,d);
- // Se reservan los repasos del día de clase ANTES de asignar los de los demás días.
- // Si no hay apuntes previamente marcados, solo se revisan conceptos de los apuntes
- // semanales ya asignados; nunca se introduce materia nueva ese día.
+ // Se reservan repasos rotativos del día de clase ANTES del resto.
+ // Solo se llaman REPASO los apuntes marcados como estudiados; los nuevos
+ // no pueden mostrarse como repasos por falta de candidatos.
  const classReviews=[];
  let classReviewRemaining=extraClassReview;
  if(classReviewRemaining>=15){
   const usedReviews=new Set();
-  const candidates=[...rev,...core.filter(d=>marks.has(keyDoc(d))),...extra.filter(d=>marks.has(keyDoc(d))),...core];
+  const candidates=[...rev];
   for(const doc of candidates){
    const id=keyDoc(doc);
    if(usedReviews.has(id)||classReviews.length>=3||classReviewRemaining<15)continue;
