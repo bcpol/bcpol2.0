@@ -169,7 +169,7 @@ async function post(endpoint,payload){
   }finally{clearTimeout(timeout);}
 }
 let planData=null,markInFlight=false,lastMarksSyncAt=0,marksRefreshing=false,markNoticeTimer;
-let planChoiceKey="",planChoices={swaps:{},extra:{}};
+let planChoiceKey="",planChoices={swaps:{},extra:{},baselineMarks:null};
 const planAccountScope=(()=>{
  let hash=2166136261;
  for(const ch of token||"")hash=Math.imul(hash^ch.charCodeAt(0),16777619);
@@ -178,12 +178,13 @@ const planAccountScope=(()=>{
 function loadPlanChoices(week){
  const key="bcpol_planning_choices_v1:"+planAccountScope+":"+(week?.numero||"autonomo")+":"+(week?.fecha_clase||"sin-clase");
  if(key===planChoiceKey)return;
- planChoiceKey=key;planChoices={swaps:{},extra:{}};
+ planChoiceKey=key;planChoices={swaps:{},extra:{},baselineMarks:null};
  try{
   const x=JSON.parse(sessionStorage.getItem(key)||"{}");
   if(x&&typeof x==="object"){
    if(x.swaps&&typeof x.swaps==="object"&&!Array.isArray(x.swaps))planChoices.swaps=x.swaps;
    if(x.extra&&typeof x.extra==="object"&&!Array.isArray(x.extra))planChoices.extra=x.extra;
+   if(Array.isArray(x.baselineMarks))planChoices.baselineMarks=x.baselineMarks.filter(k=>typeof k==="string"&&/^(trafico|administrativa|seguridad):[0-9]+$/.test(k)).slice(0,500);
   }
  }catch(_){/* La agenda se puede utilizar sin almacenamiento. */}
 }
@@ -351,6 +352,12 @@ function renderPlan(){
  if(!planData)return;
  const w=planData.semana,docs=Array.isArray(planData.catalogo)?planData.catalogo:[],marks=new Map((planData.progreso||[]).map(p=>[keyDoc(p),p.estudiado_en]));
  loadPlanChoices(w);
+ // Fijar la selección de la semana; la marca de Estudiado solo cambia el estado.
+ if(!Array.isArray(planChoices.baselineMarks)){
+  planChoices.baselineMarks=[...marks.keys()];
+  savePlanChoices();
+ }
+ const scheduleMarks=new Map(planChoices.baselineMarks.map(k=>[k,true]));
  const map=new Map(docs.map(d=>[keyDoc(d),d]));
  const root=$("class-notes"),source=$("case-source"),agenda=$("schedule");
  root.replaceChildren();source.replaceChildren();agenda.replaceChildren();
@@ -378,7 +385,7 @@ function renderPlan(){
     out.push({...d,archivo_clase_url:typeof p.archivo_clase_url==="string"?p.archivo_clase_url:null,titulo_clase:typeof p.titulo_clase==="string"?p.titulo_clase:null});allKeys.add(k);
    }return out;};
   core=pick(w.lecturas);extra=pick(w.ampliaciones);
-  core.sort((a,b)=>Number(marks.has(keyDoc(a)))-Number(marks.has(keyDoc(b)))||examScore(b,weights,level)-examScore(a,weights,level));
+  core.sort((a,b)=>Number(scheduleMarks.has(keyDoc(a)))-Number(scheduleMarks.has(keyDoc(b)))||examScore(b,weights,level)-examScore(a,weights,level));
   for(const d of core){
    const card=node("div",null,"study-note"),info=node("div"),actions=node("div",null,"links");
    info.append(node("strong",d.titulo_clase||d.titulo),node("small",(subjectNames[d.materia]||d.materia)+" · "+(marks.has(keyDoc(d))?"Ya estudiado: repasar para el supuesto":"Pendiente de estudiar")));
@@ -395,9 +402,9 @@ function renderPlan(){
  }
  const used=new Set([...core,...extra].map(keyDoc));
  const rank=(a,b)=>examScore(b,weights,level)-examScore(a,weights,level);
- let pending=docs.filter(d=>!marks.has(keyDoc(d))&&!used.has(keyDoc(d))&&(block==="mixto"||d.materia===block)).sort(rank);
- if(!pending.length)pending=docs.filter(d=>!marks.has(keyDoc(d))&&!used.has(keyDoc(d))).sort(rank);
- const reviews=weeklyStudyReviews(docs,marks,weights,level,w?.fecha_clase||madridYmd(new Date()),used);
+ let pending=docs.filter(d=>!scheduleMarks.has(keyDoc(d))&&!used.has(keyDoc(d))&&(block==="mixto"||d.materia===block)).sort(rank);
+ if(!pending.length)pending=docs.filter(d=>!scheduleMarks.has(keyDoc(d))&&!used.has(keyDoc(d))).sort(rank);
+ const reviews=weeklyStudyReviews(docs,scheduleMarks,weights,level,w?.fecha_clase||madridYmd(new Date()),used);
  const days=dateListInPeriod(w?.inicio_plan||null,end,w?.fecha_clase||null),m=mins;
  const studyDays=days.filter(d=>d.studyDay&&!d.classDay);
  const hasClass=days.some(d=>d.classDay);
@@ -441,7 +448,7 @@ function renderPlan(){
   const wantReview=type==="REPASO";
   const options=docs.filter(d=>{
    const k=keyDoc(d);
-   return k!==oldKey&&!occupied.has(k)&&(wantReview?marks.has(k):!marks.has(k));
+   return k!==oldKey&&!occupied.has(k)&&(wantReview?scheduleMarks.has(k):!marks.has(k)&&!scheduleMarks.has(k));
   });
   const group=d=>{
    const k=keyDoc(d);
@@ -489,7 +496,7 @@ function renderPlan(){
  };
  const remaining=new Map();
  const timeKey=(type,d)=>type+":"+keyDoc(d);
- const planned=(type,d)=>estimatedMinutes(d,type,weights,marks.has(keyDoc(d)));
+ const planned=(type,d)=>estimatedMinutes(d,type,weights,scheduleMarks.has(keyDoc(d)));
  const left=(type,d)=>remaining.has(timeKey(type,d))?remaining.get(timeKey(type,d)):planned(type,d);
  // Se reservan repasos rotativos del día de clase ANTES del resto.
  // Solo se llaman REPASO los apuntes marcados como estudiados; los nuevos
@@ -515,9 +522,13 @@ function renderPlan(){
   const slot=dayISO+"|"+type+"|"+keyDoc(d)+"|"+elapsed;
   const current=planChoices.swaps[slot];
   const selected=!isExtra&&current&&typeof current.key==="string"?map.get(current.key):null;
-  const compatible=selected&&(type==="REPASO"?marks.has(keyDoc(selected)):!marks.has(keyDoc(selected)));
+  // El apunte sustituido permanece visible cuando se marque como Estudiado.
+  const compatible=selected&&(type==="REPASO"?scheduleMarks.has(keyDoc(selected)):!scheduleMarks.has(keyDoc(selected)));
   const shown=compatible?selected:d;
-  const row=node("div",null,"day-task"),tag=node("span",isExtra?"EXTRA":type,type==="REPASO"?"type review":type==="AMPLIACIÓN"||isExtra?"type other":"type"),detail=node("div",null,"detail");
+  const completed=marks.has(keyDoc(shown));
+  const tagName=completed&&type!=="REPASO"?"✓ ESTUDIADO":isExtra?"EXTRA":type;
+  const row=node("div",null,"day-task"),tag=node("span",tagName,completed?"type review":type==="AMPLIACIÓN"||isExtra?"type other":"type"),detail=node("div",null,"detail");
+  if(completed)row.classList.add("done");
   detail.append(node("strong",shown.titulo));
   const total=compatible?planned(type,shown):target||planned(type,d);
   const displayMinutes=Math.min(minutes,total);
@@ -578,7 +589,7 @@ function renderPlan(){
   const leftDays=Math.max(1,studyDays.filter(d=>d.iso>=day.iso).length);
   // Distribuir la carga semanal en minutos (no en número de documentos):
   // un tema de 30 páginas no debe contar igual que uno de una página.
-  const priorityPending=priority.reduce((sum,d)=>sum+left(marks.has(keyDoc(d))?"REPASO":"CLASE",d),0);
+  const priorityPending=priority.reduce((sum,d)=>sum+left(scheduleMarks.has(keyDoc(d))?"REPASO":"CLASE",d),0);
   const priorityQuota=Math.max(5,Math.ceil(priorityPending/leftDays));
   // Mantener los minutos pendientes de cada apunte de una jornada a otra.
   // No considerar estudiado un documento por recibir un tramo de 40-45 minutos.
@@ -596,7 +607,7 @@ function renderPlan(){
   };
   let assignedPriorityMinutes=0;
   while(priority.length&&budget>=5&&usedCount<limit&&assignedPriorityMinutes<priorityQuota){
-   const d=priority[0],type=marks.has(keyDoc(d))?"REPASO":"CLASE";
+   const d=priority[0],type=scheduleMarks.has(keyDoc(d))?"REPASO":"CLASE";
    const before=budget;
    if(!assign(priority,type,"Prioridad del supuesto semanal"))break;
    assignedPriorityMinutes+=before-budget;
@@ -611,7 +622,8 @@ function renderPlan(){
    assign(autonomy,"AVANCE","Siguiente apunte pendiente");
   // Estudios opcionales elegidos por el alumno: no alteran la carga de clase
   // ni el tiempo reservado para resolver el supuesto en una sola sesión.
-  const added=extrasForDay(day.iso),shownExtra=added.filter(entry=>entry&&map.has(entry.key)&&!marks.has(entry.key)&&!baseScheduled.has(entry.key));
+  // Los extras completados permanecen visibles; solo el botón añade otra tarea.
+  const added=extrasForDay(day.iso),shownExtra=added.filter(entry=>entry&&map.has(entry.key)&&!baseScheduled.has(entry.key));
   let extraMinutes=0;
   shownExtra.forEach((entry,index)=>{
    const doc=map.get(entry.key);
@@ -629,7 +641,7 @@ function renderPlan(){
   agenda.append(box);
  });
  if(priority.length){
-  const missing=priority.reduce((sum,d)=>sum+left(marks.has(keyDoc(d))?"REPASO":"CLASE",d),0);
+  const missing=priority.reduce((sum,d)=>sum+left(scheduleMarks.has(keyDoc(d))?"REPASO":"CLASE",d),0);
   agenda.append(node("p","Quedan "+priority.length+" apuntes prioritarios incompletos ("+missing+" min orientativos pendientes). No se dan por estudiados; aumenta tu disponibilidad o continúa con ellos en la siguiente sesión.","week-help"));
  }
 }
