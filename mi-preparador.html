@@ -286,10 +286,10 @@ function importance(doc,weights){
 function estimatedMinutes(doc,kind,weights,marked){
  const pages=Number(doc.paginas),hasPages=Number.isInteger(pages)&&pages>0&&pages<=500;
  const weight=importance(doc,weights);
- // Regla BCPOL ajustada: alrededor de 3 min por página y un margen pequeño
- // para asimilación. Importancia: variación moderada (0,9–1,2), nunca duplica.
- // La extensión se ha verificado en el catálogo; 25 min sería el respaldo.
- const raw=(hasPages?2+pages*3:25)*(0.90+(weight-2)*0.10);
+ // Primera lectura: mínimo de 5 minutos por página de un apunte BCPOL.
+ // La importancia únicamente añade entre un 0 % y un 30 % orientativo.
+ // Los repasos siguen utilizando una fracción de la primera lectura.
+ const raw=(hasPages?pages*5:30)*(1+(weight-2)*0.10);
  const factor=kind==="REPASO"||marked?0.50:kind==="AMPLIACIÓN"?0.85:1;
  return Math.max(5,Math.min(480,Math.round(raw*factor/5)*5));
 }
