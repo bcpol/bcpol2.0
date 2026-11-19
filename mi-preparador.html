@@ -39,6 +39,8 @@ fieldset{border:0;padding:0;margin:18px 0}legend{font-weight:800;margin:0 0 10px
 .note-link{font-size:.78rem;font-weight:800;color:#146abd;text-decoration:none}
 .note-link:hover{text-decoration:underline}
 .media-link{display:inline-flex;align-items:center;border:1px solid #cbdce9;border-radius:8px;padding:5px 8px;line-height:1.35;white-space:nowrap}
+.media-link.pdf{background:#eaf3ff;color:#155ca8;border-color:#bad7f7}
+.media-link.pdf:hover{background:#dbeaff}
 .media-link.podcast{background:#eaf7f5;color:#126b60;border-color:#b5ded8}
 .media-link.youtube{background:#fff2f0;color:#a92a25;border-color:#efc9c3}
 .media-link:focus-visible,.media-video-menu a:focus-visible{outline:2px solid #197fe5;outline-offset:2px}
@@ -278,7 +280,7 @@ function madridYmd(date){
 function niceDate(iso){return new Intl.DateTimeFormat("es-ES",{day:"numeric",month:"short",timeZone:"Europe/Madrid"}).format(new Date(iso));}
 function docLink(parent,d,label){
  const u=safeDriveUrl(d.archivo_clase_url)||safeDriveUrl(d.pdf_url);if(!u)return;
- const a=node("a",label||"Abrir apunte","note-link");a.href=u;a.target="_blank";a.rel="noopener noreferrer";parent.append(a);
+ const a=node("a","📄 "+(label||"Abrir apunte"),"note-link media-link pdf");a.href=u;a.target="_blank";a.rel="noopener noreferrer";parent.append(a);
 }
 function safeYoutubeUrl(raw){
  try{
