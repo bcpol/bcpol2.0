@@ -208,8 +208,8 @@ function render(){
     if(item.aviso_audio&&item.audio_url){info.append(elem("span","warning","⚠ "+item.aviso_audio));}
     const buttons=elem("div","actions");
     const pdf=safeDrive(item.pdf_url);
-    if(pdf){const a=elem("a","btn pdf","📄 PDF");a.href=pdf;a.target="_blank";a.rel="noopener noreferrer";a.setAttribute("aria-label","Ver PDF de "+item.titulo);buttons.append(a);}
-    if(item.audio_url){const aud=safeDrive(item.audio_url);if(aud){const a=elem("a","btn audio","🎧 Escuchar");a.href=aud;a.target="_blank";a.rel="noopener noreferrer";a.setAttribute("aria-label","Escuchar podcast en Google Drive: "+item.titulo);buttons.append(a);}}
+    if(pdf){const a=elem("a","btn pdf","📄 Ver apunte");a.href=pdf;a.target="_blank";a.rel="noopener noreferrer";a.setAttribute("aria-label","Ver PDF de "+item.titulo);buttons.append(a);}
+    if(item.audio_url){const aud=safeDrive(item.audio_url);if(aud){const a=elem("a","btn audio","🎧 Podcast");a.href=aud;a.target="_blank";a.rel="noopener noreferrer";a.setAttribute("aria-label","Escuchar podcast en Google Drive: "+item.titulo);buttons.append(a);}}
     const videos=(Array.isArray(item.videos_youtube)?item.videos_youtube:[]).map(v=>({titulo:typeof v.titulo==="string"?v.titulo:"Vídeo BCPOL",url:safeYoutube(v.url),tipo:v.tipo})).filter(v=>!!v.url);
     if(videos.length===1){
       const a=elem("a","btn youtube","▶ YouTube");a.href=videos[0].url;a.target="_blank";a.rel="noopener noreferrer";
