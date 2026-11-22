@@ -84,8 +84,7 @@ footer{text-align:center;padding:30px 15px;color:var(--muted);font-size:.75rem}
     <div class="panel exam-progress"><div class="progress-title"><strong>MI PROGRESO EN EXÁMENES</strong><strong id="seenPercent"></strong></div><progress id="seenBar" max="100" value="0" aria-label="Progreso en exámenes oficiales"></progress><small id="seenCount" aria-live="polite"></small></div>
     <div class="panel">
       <nav class="view-switch" aria-label="Ordenar exámenes">
-        <button type="button" data-view="subida" aria-pressed="true">🆕 Últimos incorporados</button>
-        <button type="button" data-view="realizacion" aria-pressed="false">📅 Fecha de realización</button>
+        <button type="button" data-view="subida" aria-pressed="true">🆕 Por incorporación</button>
         <button type="button" data-view="municipio" aria-pressed="false">🔤 Orden alfabético (A–Z)</button>
       </nav>
       <p class="order-note" id="order-note">Primero los últimos exámenes incorporados a BCPOL; los antiguos sin fecha de incorporación registrada siguen ordenados por año.</p>
@@ -204,11 +203,10 @@ function selectOptions(id,values){
 }
 const orderNotes={
  subida:"Primero los exámenes publicados más recientemente en BCPOL. El archivo histórico sin fecha de alta registrada se muestra después, agrupado por año sin atribuirle una fecha ficticia.",
- realizacion:"Se usa el día exacto del examen cuando está verificado. Cuando solo consta el año de convocatoria, se mantiene ese año sin inventar día ni mes.",
  municipio:"Municipios en orden alfabético de la A a la Z. Dentro de cada municipio, primero las convocatorias más recientes."
 };
 function setView(next){
- if(!["subida","realizacion","municipio"].includes(next))return;
+ if(!["subida","municipio"].includes(next))return;
  view=next;
  document.querySelectorAll("[data-view]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.view===view)));
  render();
@@ -233,18 +231,10 @@ function comparaSubida(a,b){
  const ap=fechaValida(a.fecha_publicacion)?a.fecha_publicacion:"";
  const bp=fechaValida(b.fecha_publicacion)?b.fecha_publicacion:"";
  if(ap!==bp)return ap&&bp?(ap>bp?-1:1):(ap?-1:1);
- return ap ? b.id-a.id : b.anio-a.anio || comparaRealizacion(a,b);
-}
-function comparaRealizacion(a,b){
- if(a.anio!==b.anio)return b.anio-a.anio;
- const af=fechaValida(a.fecha_realizacion)?a.fecha_realizacion:"";
- const bf=fechaValida(b.fecha_realizacion)?b.fecha_realizacion:"";
- if(af!==bf)return af&&bf?(af>bf?-1:1):(af?-1:1);
- // Ante fechas de examen desconocidas, no se inventa un orden cronológico.
- return b.id-a.id;
+ return ap ? b.id-a.id : b.anio-a.anio || collator.compare(a.municipio,b.municipio) || b.id-a.id;
 }
 function comparaAlfabetico(a,b){
- return collator.compare(a.municipio,b.municipio)||comparaRealizacion(a,b);
+ return collator.compare(a.municipio,b.municipio)||b.anio-a.anio||b.id-a.id;
 }
 function baseFiltered(){
  const words=normalize($("search").value.trim()).split(/\s+/).filter(Boolean);
@@ -279,12 +269,12 @@ function render(){
  $("count").textContent=found.length+" de "+docs.length+" exámenes";
  $("applied").textContent=$("case").value?"Casuística: "+byCase($("case").value).label:"";
  $("order-note").textContent=orderNotes[view];
- const ordered=found.slice().sort(view==="subida"?comparaSubida:view==="realizacion"?comparaRealizacion:comparaAlfabetico);
+ const ordered=found.slice().sort(view==="subida"?comparaSubida:comparaAlfabetico);
  const grouped=new Map();
  for(const d of ordered){
    const key=view==="subida"
      ? (fechaValida(d.fecha_publicacion)?"p:"+d.fecha_publicacion:"h:"+d.anio)
-     : view==="realizacion"?"r:"+d.anio:"m:"+d.municipio;
+     : "m:"+d.municipio;
    if(!grouped.has(key))grouped.set(key,[]);
    grouped.get(key).push(d);
  }
@@ -294,7 +284,6 @@ function render(){
    let headingText;
    if(key.startsWith("p:"))headingText="INCORPORADOS EL "+formatoFecha(key.slice(2));
    else if(key.startsWith("h:"))headingText="AÑO "+key.slice(2)+" · FECHA DE INCORPORACIÓN NO REGISTRADA";
-   else if(key.startsWith("r:"))headingText="EXÁMENES DE "+key.slice(2);
    else headingText=key.slice(2);
    const heading=elem("div","group");
    heading.append(elem("h2",null,headingText),elem("small",null,list.length+" "+(list.length===1?"examen":"exámenes")));
@@ -305,7 +294,6 @@ function render(){
      if(nuevo)info.append(elem("span","exam-new-label","NUEVO EN BCPOL"));
      info.append(elem("h3",null,d.municipio+" · "+d.anio));
      info.append(elem("span","filename",d.titulo));
-     if(fechaValida(d.fecha_realizacion))info.append(elem("small","exam-date-meta","Fecha del examen: "+formatoFecha(d.fecha_realizacion)));
      if(fechaValida(d.fecha_publicacion))info.append(elem("small","exam-date-meta","Incorporado a BCPOL: "+formatoFecha(d.fecha_publicacion)));
      if(d.modalidad==="ascenso")info.append(elem("span","kind","PRUEBA DE ASCENSO"));
      const revisado=d.clasificacion==="verificada"&&Array.isArray(d.materias_detalladas)&&d.materias_detalladas.length>0;
