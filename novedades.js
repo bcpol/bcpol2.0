@@ -5,10 +5,19 @@
   // Avisos de publicación: cambia el identificador cuando publiques otro comunicado.
   const AVISOS = [
     {
+      id: 'examenes-oficiales-la-zubia-villanueva-2026-11-22',
+      tipo: 'NUEVOS EXÁMENES OFICIALES',
+      titulo: '2 nuevos supuestos oficiales · 2026',
+      descripcion: 'Ya disponibles: LA ZUBIA (Granada), con protección de menores, lesiones, drogas y actuaciones policiales; y VILLANUEVA DEL ROSARIO (Málaga), con establecimientos, horarios, alcoholemia, siniestros viales y sistemas de retención infantil. Accede a los PDF y filtra sus materias en la biblioteca.',
+      enlace: 'examenes.html',
+      texto_enlace: 'Ver los nuevos exámenes',
+      icono: '📄'
+    },
+    {
       id: 'examenes-oficiales-2026-11-16',
       tipo: 'NUEVA FUNCIÓN BCPOL',
       titulo: 'EXÁMENES OFICIALES',
-      descripcion: 'Ya puedes practicar con 328 supuestos de convocatorias reales de Policía Local de Andalucía. Busca por municipio o año y consulta qué materias se trabajan en cada examen.',
+      descripcion: 'Ya puedes practicar con 330 supuestos de convocatorias reales de Policía Local de Andalucía. Busca por municipio o año y consulta qué materias se trabajan en cada examen.',
       enlace: 'examenes.html',
       texto_enlace: 'Consultar exámenes oficiales',
       icono: '📄',
