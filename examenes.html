@@ -44,6 +44,9 @@ h1{margin:6px 0 10px;font-size:clamp(2rem,4vw,3.1rem);letter-spacing:-.04em}
 .item-info{min-width:0;flex:1}
 .item h3{margin:0 0 4px;font-size:.95rem;font-weight:850;line-height:1.4;color:var(--navy)}
 .item .filename{display:block;font-size:.73rem;color:#6f8294;line-height:1.4}
+.item-new{border-color:#a9d6fa;border-left:4px solid #197fe5;background:#f8fcff}
+.exam-new-label{display:inline-block;padding:4px 9px;background:#0e6cc1;color:#fff;font-size:.66rem;font-weight:900;letter-spacing:.07em;border-radius:7px;margin:0 0 8px}
+.exam-date-meta{display:block;margin-top:6px;font-size:.73rem;color:#42627e;line-height:1.5}
 .kind{display:inline-block;background:#eef3ff;color:#244e99;border-radius:7px;padding:3px 8px;margin:7px 0 0;font-size:.68rem;font-weight:800}
 .topic-title{font-weight:850;font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;color:#526e86;margin:12px 0 7px}
 .topics{display:flex;flex-wrap:wrap;gap:6px}
@@ -81,10 +84,11 @@ footer{text-align:center;padding:30px 15px;color:var(--muted);font-size:.75rem}
     <div class="panel exam-progress"><div class="progress-title"><strong>MI PROGRESO EN EXÁMENES</strong><strong id="seenPercent"></strong></div><progress id="seenBar" max="100" value="0" aria-label="Progreso en exámenes oficiales"></progress><small id="seenCount" aria-live="polite"></small></div>
     <div class="panel">
       <nav class="view-switch" aria-label="Ordenar exámenes">
-        <button type="button" data-view="anio" aria-pressed="true">📅 Por fecha (más recientes)</button>
+        <button type="button" data-view="subida" aria-pressed="true">🆕 Últimos incorporados</button>
+        <button type="button" data-view="realizacion" aria-pressed="false">📅 Fecha de realización</button>
         <button type="button" data-view="municipio" aria-pressed="false">🔤 Orden alfabético (A–Z)</button>
       </nav>
-      <p class="order-note">La ordenación por fecha utiliza el año de convocatoria; dentro de cada año, los exámenes se muestran por municipio. El orden alfabético agrupa por municipio y muestra primero sus exámenes más recientes.</p>
+      <p class="order-note" id="order-note">Primero los últimos exámenes incorporados a BCPOL; los antiguos sin fecha de incorporación registrada siguen ordenados por año.</p>
       <div class="controls">
         <div class="search-field"><label for="search">BUSCADOR</label><input id="search" type="search" placeholder="Municipio, tema o expresión concreta…" autocomplete="off"></div>
         <div><label for="year">AÑO</label><select id="year"><option value="">Todos los años</option></select></div>
@@ -112,7 +116,7 @@ const endpoint="https://axgbiqbyserypsbtwnjr.supabase.co/functions/v1/bcpol-exam
 const token=sessionStorage.getItem("bcpol_session_v2");
 const $=id=>document.getElementById(id);
 const collator=new Intl.Collator("es",{sensitivity:"base"});
-let docs=[],view="anio";
+let docs=[],view="subida";
 let seen=new Set();
 const saving=new Set(), errors=new Map();
 function updateProgress(){
@@ -198,10 +202,49 @@ function selectOptions(id,values){
  const select=$(id);
  for(const s of values){const op=document.createElement("option");op.value=String(s);op.textContent=String(s);select.append(op)}
 }
+const orderNotes={
+ subida:"Primero los exámenes publicados más recientemente en BCPOL. El archivo histórico sin fecha de alta registrada se muestra después, agrupado por año sin atribuirle una fecha ficticia.",
+ realizacion:"Se usa el día exacto del examen cuando está verificado. Cuando solo consta el año de convocatoria, se mantiene ese año sin inventar día ni mes.",
+ municipio:"Municipios en orden alfabético de la A a la Z. Dentro de cada municipio, primero las convocatorias más recientes."
+};
 function setView(next){
+ if(!["subida","realizacion","municipio"].includes(next))return;
  view=next;
  document.querySelectorAll("[data-view]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.view===view)));
  render();
+}
+function fechaValida(s){
+ return typeof s==="string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
+}
+function formatoFecha(s){
+ if(!fechaValida(s))return "";
+ const [y,m,d]=s.split("-");
+ return d+"/"+m+"/"+y;
+}
+function esNuevo(d){
+ if(!fechaValida(d.fecha_publicacion))return false;
+ const [y,m,dia]=d.fecha_publicacion.split("-").map(Number);
+ const hoy=new Date();hoy.setHours(0,0,0,0);
+ const subida=new Date(y,m-1,dia);subida.setHours(0,0,0,0);
+ const dias=(hoy-subida)/86400000;
+ return dias>=0 && dias<14;
+}
+function comparaSubida(a,b){
+ const ap=fechaValida(a.fecha_publicacion)?a.fecha_publicacion:"";
+ const bp=fechaValida(b.fecha_publicacion)?b.fecha_publicacion:"";
+ if(ap!==bp)return ap&&bp?(ap>bp?-1:1):(ap?-1:1);
+ return ap ? b.id-a.id : b.anio-a.anio || comparaRealizacion(a,b);
+}
+function comparaRealizacion(a,b){
+ if(a.anio!==b.anio)return b.anio-a.anio;
+ const af=fechaValida(a.fecha_realizacion)?a.fecha_realizacion:"";
+ const bf=fechaValida(b.fecha_realizacion)?b.fecha_realizacion:"";
+ if(af!==bf)return af&&bf?(af>bf?-1:1):(af?-1:1);
+ // Ante fechas de examen desconocidas, no se inventa un orden cronológico.
+ return b.id-a.id;
+}
+function comparaAlfabetico(a,b){
+ return collator.compare(a.municipio,b.municipio)||comparaRealizacion(a,b);
 }
 function baseFiltered(){
  const words=normalize($("search").value.trim()).split(/\s+/).filter(Boolean);
@@ -235,24 +278,35 @@ function render(){
  renderQuickCases(base);
  $("count").textContent=found.length+" de "+docs.length+" exámenes";
  $("applied").textContent=$("case").value?"Casuística: "+byCase($("case").value).label:"";
+ $("order-note").textContent=orderNotes[view];
+ const ordered=found.slice().sort(view==="subida"?comparaSubida:view==="realizacion"?comparaRealizacion:comparaAlfabetico);
  const grouped=new Map();
- for(const d of found){
-   const key=view==="anio"?String(d.anio):d.municipio;
+ for(const d of ordered){
+   const key=view==="subida"
+     ? (fechaValida(d.fecha_publicacion)?"p:"+d.fecha_publicacion:"h:"+d.anio)
+     : view==="realizacion"?"r:"+d.anio:"m:"+d.municipio;
    if(!grouped.has(key))grouped.set(key,[]);
    grouped.get(key).push(d);
  }
- const sorted=[...grouped.keys()].sort((a,b)=>view==="anio"?Number(b)-Number(a):collator.compare(a,b));
  const frag=document.createDocumentFragment();
  if(!found.length)frag.append(elem("div","empty","No hay exámenes que coincidan con estos filtros."));
- for(const group of sorted){
-   const list=grouped.get(group);
-   const heading=elem("div","group");const h2=elem("h2",null,view==="anio"?"AÑO "+group:group);
-   heading.append(h2,elem("small",null,list.length+" "+(list.length===1?"examen":"exámenes")));frag.append(heading);
-   list.sort((a,b)=>view==="anio"?collator.compare(a.municipio,b.municipio)||a.id-b.id:b.anio-a.anio||a.id-b.id);
+ for(const [key,list] of grouped){
+   let headingText;
+   if(key.startsWith("p:"))headingText="INCORPORADOS EL "+formatoFecha(key.slice(2));
+   else if(key.startsWith("h:"))headingText="AÑO "+key.slice(2)+" · FECHA DE INCORPORACIÓN NO REGISTRADA";
+   else if(key.startsWith("r:"))headingText="EXÁMENES DE "+key.slice(2);
+   else headingText=key.slice(2);
+   const heading=elem("div","group");
+   heading.append(elem("h2",null,headingText),elem("small",null,list.length+" "+(list.length===1?"examen":"exámenes")));
+   frag.append(heading);
    for(const d of list){
-     const card=elem("article","item"),info=elem("div","item-info");
+     const nuevo=esNuevo(d);
+     const card=elem("article","item"+(nuevo?" item-new":"")),info=elem("div","item-info");
+     if(nuevo)info.append(elem("span","exam-new-label","NUEVO EN BCPOL"));
      info.append(elem("h3",null,d.municipio+" · "+d.anio));
      info.append(elem("span","filename",d.titulo));
+     if(fechaValida(d.fecha_realizacion))info.append(elem("small","exam-date-meta","Fecha del examen: "+formatoFecha(d.fecha_realizacion)));
+     if(fechaValida(d.fecha_publicacion))info.append(elem("small","exam-date-meta","Incorporado a BCPOL: "+formatoFecha(d.fecha_publicacion)));
      if(d.modalidad==="ascenso")info.append(elem("span","kind","PRUEBA DE ASCENSO"));
      const revisado=d.clasificacion==="verificada"&&Array.isArray(d.materias_detalladas)&&d.materias_detalladas.length>0;
      info.append(elem("div","topic-title",revisado?"Materias concretas del supuesto":"Materias del supuesto"));
