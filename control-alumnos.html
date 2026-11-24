@@ -23,12 +23,14 @@ a{color:inherit}.top{background:linear-gradient(125deg,#06182b,#113c62);color:#f
 .overlay{position:fixed;inset:0;background:#05182bbf;z-index:10;display:none;align-items:stretch;justify-content:flex-end}.overlay.open{display:flex}.drawer{width:min(620px,100%);height:100%;background:#fff;overflow:auto;box-shadow:-18px 0 70px #0002}.drawer-head{position:sticky;top:0;background:#0b2b49;color:#fff;padding:22px 24px;display:flex;justify-content:space-between;gap:12px;align-items:center;z-index:2}.drawer-head h2{margin:6px 0 0;font-size:25px}.drawer-head small{color:#bfd5ea}.close{border:1px solid #58718a;background:#ffffff1a;border-radius:10px;color:#fff;font-size:22px;width:42px;height:42px;cursor:pointer}.drawer-body{padding:24px}.detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.tile{padding:14px;border:1px solid var(--line);border-radius:13px;background:#f9fbfe}.tile small{display:block;color:#62758a;font-size:11px;font-weight:700}.tile strong{display:block;margin-top:8px;font-size:22px;color:#0a3557}.section-title{font-size:15px;font-weight:850;margin:25px 0 12px;color:#103a60}.details{list-style:none;margin:0;padding:0}.details li{padding:12px 2px;border-bottom:1px solid #ebf0f4;font-size:13px;line-height:1.5}.details li span{display:block;color:#7c8997;font-size:11px;margin-top:3px}.muted{font-size:13px;color:#7a8794;line-height:1.55}.rowline{margin-top:10px;font-size:13px;line-height:1.5}.rowline strong{color:#103a60}
 @media(max-width:900px){.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.bar{align-items:stretch}.tools{width:100%}.tools input{flex:1}.heading{align-items:start}}
 @media(max-width:560px){.top{padding:14px 17px}.brand img{width:43px;height:43px}.brand strong{font-size:17px}.brand small{font-size:10px}.top-actions{width:100%;display:grid;grid-template-columns:1fr 1fr}.top .btn{text-align:center;padding:10px 8px}.wrap{padding:25px 12px 40px}.metrics{gap:9px}.metric{padding:17px 14px}.metric strong{font-size:30px}.metric small{font-size:11px}.bar{padding:17px 14px}.tools{display:grid;grid-template-columns:1fr 1fr}.tools input{grid-column:1/-1;width:100%}.tools select{width:100%;max-width:100%}.detail-grid{gap:8px}.drawer-body{padding:17px}.drawer-head{padding:17px}}
+
+#manage-access[hidden]{display:none!important}
 </style>
 </head>
 <body>
 <header class="top">
 <a href="index.html" class="brand"><img src="LOGO BC POL CUADRADO PNG.png" alt="BCPOL"><span><strong>BCPOL · CONTROL DE ALUMNOS</strong><small>ÁREA PRIVADA DE ADMINISTRACIÓN</small></span></a>
-<div class="top-actions"><a class="btn" href="index.html" style="text-decoration:none">← Volver a BCPOL</a><button class="btn primary" type="button" id="refresh" disabled>↻ Actualizar datos</button></div>
+<div class="top-actions"><a class="btn" href="index.html" style="text-decoration:none">← Volver a BCPOL</a><a class="btn" id="manage-access" href="aula-admin.html" hidden style="text-decoration:none">Gestionar mensualidades y accesos →</a><button class="btn primary" type="button" id="refresh" disabled>↻ Actualizar datos</button></div>
 </header>
 <main class="wrap">
 <div class="eyebrow">Seguimiento académico · BCPOL</div>
@@ -67,13 +69,14 @@ function hideMessage(){$("notice").hidden=true;}
 async function post(slug,body){const res=await fetch(ROOT+slug,{method:"POST",mode:"cors",credentials:"omit",cache:"no-store",referrerPolicy:"no-referrer",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});const data=await res.json().catch(()=>({}));if(!res.ok||!data.ok)throw new Error(data.error||"No se pudo recuperar la información");return data;}
 async function load(){
   const token=sessionStorage.getItem(KEY);
+  $("manage-access").hidden=true;
   if(!token){$("dashboard").hidden=true;message("Inicia sesión con tu cuenta de administrador en la web BCPOL antes de acceder a esta página.",true);return;}
   $("refresh").disabled=true;$("dashboard").hidden=true;message("Comprobando sesión y recuperando el progreso…",false);
   try{
     const check=await post("bcpol-web-auth",{action:"verify",token});
     if(check.username!=="bcpol")throw new Error("Este apartado es exclusivo de la cuenta administradora BCPOL.");
     const data=await post("bcpol-control-alumnos",{action:"snapshot",token});
-    snapshot=data;$("dashboard").hidden=false;hideMessage();$("refresh").disabled=false;
+    snapshot=data;$("manage-access").hidden=false;$("dashboard").hidden=false;hideMessage();$("refresh").disabled=false;
     $("updated").textContent="Actualizado: "+new Date(data.consultado_en).toLocaleString("es-ES",{timeZone:"Europe/Madrid"});
     $("m-students").textContent=number(data.resumen.alumnos);
     $("m-reading").textContent=number(data.resumen.con_apuntes);
