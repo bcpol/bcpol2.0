@@ -1,8 +1,10 @@
 <!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Gestión Aula BCPOL</title><link rel="icon" href="LOGO BC POL CUADRADO PNG.png">
 <style>
 :root{--navy:#06182b;--blue:#197fe5;--line:#dce6ef;--muted:#65778a}*{box-sizing:border-box}body{margin:0;background:#f2f6fa;color:#10243b;font:15px/1.5 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}header{background:var(--navy);color:white;border-bottom:3px solid #d7b15e}.wrap{max-width:1150px;padding:0 20px;margin:auto}.top{padding:16px 0;display:flex;align-items:center;justify-content:space-between;gap:10px}.logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:white}.logo img{width:44px;height:44px;object-fit:contain}.logo span{font-weight:900;letter-spacing:.05em}.top a.back{color:#f1f7fc;text-decoration:none;font-size:.85rem}.intro{padding:32px 0 12px}.intro h1{margin:0;font-size:2rem}.intro p{color:var(--muted);margin:6px 0 18px}.notice{border:1px solid #ccdaea;background:white;color:#284363;padding:13px 16px;border-radius:10px;margin-bottom:16px}.layout{display:grid;grid-template-columns:1fr 1fr;gap:16px}.card{border:1px solid var(--line);background:white;padding:21px;border-radius:17px;box-shadow:0 6px 25px #091d350a}.card h2{margin:0 0 15px;font-size:1.12rem}.full{grid-column:1/-1}.field{margin-bottom:15px}.field label{display:block;font-weight:760;font-size:.81rem;margin-bottom:6px}.field input,.field select{width:100%;height:41px;border:1px solid #cbd8e4;border-radius:9px;padding:8px 10px;background:#fff;font:inherit;font-size:.87rem}.field input[type=checkbox]{width:auto;height:auto;margin-right:7px}.checkrow{display:flex;gap:15px;flex-wrap:wrap;margin-bottom:14px}.checkrow label{font-weight:700;font-size:.83rem}.actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.btn{background:var(--blue);color:#fff;font-weight:800;border:0;border-radius:9px;padding:11px 15px;cursor:pointer}.btn:disabled{opacity:.5;cursor:not-allowed}.hint{font-size:.77rem;color:var(--muted);line-height:1.5}.tablewrap{overflow:auto;max-height:440px}.tbl{width:100%;border-collapse:collapse;font-size:.8rem;text-align:left}.tbl th{position:sticky;top:0;background:#eaf2f9;color:#24435e}.tbl th,.tbl td{padding:10px;border-bottom:1px solid #ecf0f4}.tbl tbody tr{cursor:pointer}.tbl tbody tr:hover{background:#f3f9fd}.hidden{display:none!important}main{padding-bottom:65px}@media(max-width:720px){.layout{grid-template-columns:1fr}.intro h1{font-size:1.5rem}.card{padding:15px}}
+ 
+.matrix-card{padding:20px;min-width:0}.matrix-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.matrix-top h2{margin-bottom:3px}.matrix-top p{margin-top:0}.matrix-link{color:#1768ac;font-weight:750;font-size:.82rem}.matrix-tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);margin:8px 0 16px}.matrix-tab{border:0;background:transparent;color:#65778a;padding:11px 15px;cursor:pointer;font-weight:800;border-bottom:3px solid transparent}.matrix-tab[aria-pressed=true]{color:#103b65;border-bottom-color:var(--blue)}.matrix-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.matrix-tools input,.matrix-tools select{border:1px solid #cbd8e4;border-radius:9px;padding:10px;background:white;font:inherit;font-size:.83rem;min-height:40px}.matrix-summary{display:flex;gap:12px;flex-wrap:wrap;margin-top:13px;font-size:.8rem;color:#31516d}.matrix-summary strong{color:#102b43}.matrix-scroll{max-height:620px;border:1px solid var(--line);border-radius:10px}.matrix-table{min-width:1000px;border-collapse:separate;border-spacing:0}.matrix-table th,.matrix-table td{padding:8px 9px;text-align:center;white-space:nowrap}.matrix-table th:first-child,.matrix-table td:first-child{position:sticky;left:0;text-align:left;background:white;min-width:145px;max-width:210px;box-shadow:2px 0 4px #091d3510;z-index:1}.matrix-table th{z-index:2}.matrix-table th:first-child{background:#eaf2f9;z-index:3}.matrix-table tbody tr{cursor:default}.matrix-table input{width:19px;height:19px;accent-color:#15836a;cursor:pointer;vertical-align:middle}.matrix-table input:disabled{cursor:not-allowed;opacity:.45}.matrix-table .changed{background:#fff4d8}.matrix-table .current-month{background:#d9eafa;color:#0a436e}.matrix-table .student-link{border:0;background:transparent;color:#13578f;cursor:pointer;font-weight:800;padding:4px;text-align:left;overflow-wrap:anywhere;white-space:normal}.matrix-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:13px;background:#f5f8fb;border-radius:10px;padding:12px}.matrix-footer>span{font-size:.83rem;font-weight:700}.matrix-secondary{background:white;border:1px solid #cbd8e4;border-radius:9px;color:#27435e;padding:10px 12px;font-weight:750;cursor:pointer}.matrix-secondary:disabled{opacity:.5;cursor:not-allowed}.matrix-card button:focus-visible,.matrix-card input:focus-visible,.matrix-card select:focus-visible{outline:2px solid #197fe5;outline-offset:2px}.matrix-table td:last-child{font-weight:700}.matrix-table .month-count{display:block;font-size:.66rem;font-weight:400;color:#526c84}.matrix-table .empty-matrix{text-align:center;position:static;padding:25px}.matrix-result-error{color:#9a2744!important}@media(max-width:720px){.matrix-card{padding:12px}.matrix-scroll{max-height:66vh}.matrix-tools input{width:100%}.matrix-table th:first-child,.matrix-table td:first-child{min-width:110px;max-width:140px}.matrix-footer .actions{width:100%}}
 </style></head><body><header><div class="wrap top"><a class="logo" href="aula.html"><img src="LOGO BC POL CUADRADO PNG.png" alt="BCPOL"><span>BCPOL · GESTIÓN DE AULA</span></a><a class="back" href="aula.html">← Aula virtual</a></div></header>
-<main class="wrap"><section class="intro"><h1>Administración de mensualidades</h1><p>Gestiona el acceso individual de los alumnos. No modifica las contraseñas de la web ni concede automáticamente permisos en Google Drive.</p></section>
+<main class="wrap"><section class="intro"><h1>Administración de mensualidades</h1><p>Gestiona las mensualidades y verifica los accesos de todos los alumnos desde una sola tabla. Conserva también la ficha individual y la gestión de clases.</p></section>
 <div id="status" class="notice" role="status">Comprobando acceso del administrador…</div>
 <section id="loginPanel" class="card hidden" aria-label="Iniciar sesión de preparador" style="max-width:540px;margin-bottom:20px">
  <h2>Acceder como preparador</h2>
@@ -32,6 +34,17 @@
  </form><p class="hint">La activación cierra todas las sesiones actuales de bcpol. Después deberás iniciar sesión con la nueva contraseña.</p>
 </section>
 <div id="panel" class="layout hidden">
+<section class="card full matrix-card" aria-label="Gestión general de alumnos">
+ <div class="matrix-top"><div><h2>GESTIÓN DE ALUMNOS</h2><p class="hint">Marca las casillas directamente y guarda todos los cambios juntos.</p></div><a href="control-alumnos.html" class="matrix-link">Ver progreso académico →</a></div>
+ <div class="matrix-tabs" role="group" aria-label="Tipo de control"><button type="button" id="tabPaid" class="matrix-tab" aria-pressed="true">Mensualidades</button><button type="button" id="tabDrive" class="matrix-tab" aria-pressed="false">Permisos Drive</button></div>
+ <div class="matrix-tools"><input id="matrixSearch" type="search" placeholder="Buscar alumno…" aria-label="Buscar alumno"><select id="matrixFilter" aria-label="Filtrar alumnos"><option value="all">Todos los alumnos</option><option value="active">Con mes actual abonado</option><option value="pending">Sin mes actual abonado</option></select><span id="matrixCount" class="hint"></span></div>
+ <div class="matrix-summary" id="matrixSummary" aria-live="polite"></div>
+ <p class="hint" id="matrixHint"></p>
+ <div class="tablewrap matrix-scroll"><table class="tbl matrix-table"><thead id="matrixHead"></thead><tbody id="roster"></tbody></table></div>
+ <div class="matrix-footer"><span id="matrixPending" role="status">Sin cambios pendientes</span><div class="actions"><button type="button" id="matrixDiscard" class="matrix-secondary" disabled>Descartar cambios</button><button type="button" id="matrixSave" class="btn" disabled>Guardar cambios</button></div></div>
+ <p id="matrixResult" class="hint" role="status"></p>
+ <p class="hint">No desmarques mensualidades anteriores por una baja. Drive verificado solo registra que has comprobado el permiso real; no lo concede ni lo retira. El acceso a otras herramientas sigue sus reglas actuales.</p>
+</section>
 <section class="card"><h2>1. Datos del alumno</h2><div class="field"><label for="student">Usuario BCPOL</label><select id="student"></select></div><div class="field"><label for="email">Correo de Google Drive</label><input id="email" type="email" placeholder="alumno@gmail.com" autocomplete="off"></div><div class="actions"><button id="saveEmail" class="btn">Guardar correo</button><span class="hint">El alumno debe autorizarse en Drive por separado.</span></div></section>
 <section class="card"><h2>2. Acceso por mensualidad</h2><div class="field"><label for="month">Mensualidad</label><select id="month"></select></div><div class="checkrow"><label><input id="paid" type="checkbox"> Mes abonado</label><label><input id="drive" type="checkbox"> Permisos Drive verificados</label></div><div class="actions"><button id="saveAccess" class="btn">Guardar acceso</button></div><p class="hint">Un mes abonado se conserva indefinidamente. Si el alumno causa baja, no desmarques meses anteriores. «Drive verificado» se marca solo tras confirmar que el correo tiene permiso para la carpeta correspondiente.</p></section>
 <section class="card full"><h2>3. Registrar una clase</h2><div class="layout"><div class="field"><label for="classMonth">Mes</label><select id="classMonth"></select></div><div class="field"><label for="classNum">Número de clase</label><input id="classNum" type="number" min="1" max="70" placeholder="Ej. 9"></div></div><div class="field"><label for="classTitle">Título de la clase</label><input id="classTitle" type="text" placeholder="Clase 9 · Mixto"></div><div class="field"><label for="classLink">Carpeta de Google Drive</label><input id="classLink" type="url" placeholder="https://drive.google.com/drive/folders/…"></div><div class="checkrow"><label><input type="checkbox" id="published"> Publicar clase (solo con los permisos correctamente configurados)</label></div><button id="saveClass" class="btn">Guardar clase</button><p class="hint">Las carpetas no se publican por defecto. Se recomienda una carpeta independiente por mensualidad, sin heredar permisos de una carpeta general compartida.</p></section>
@@ -41,7 +54,7 @@
 <div class="field"><label for="youtubeLink">Enlace del vídeo de YouTube</label><input id="youtubeLink" type="url" maxlength="500" placeholder="https://youtu.be/… o https://www.youtube.com/watch?v=…" autocomplete="off"></div>
 <div class="actions"><button id="saveVideo" class="btn">Guardar enlace de YouTube</button><span class="hint">Deja el campo vacío y guarda para quitar el vídeo. Los vídeos privados requieren permisos de YouTube aparte.</span></div>
 </section>
-<section class="card full"><h2>5. Relación de alumnos</h2><div class="tablewrap"><table class="tbl"><thead><tr><th>Usuario</th><th>Correo Drive</th><th>Meses abonados</th><th>Carpetas verificadas</th></tr></thead><tbody id="roster"></tbody></table></div></section>
+
 </div></main>
 <script>
 'use strict';
@@ -93,14 +106,110 @@ function canonicalYouTube(input){
  if(!/^[A-Za-z0-9_-]{11}$/.test(videoId))throw Error('No se reconoce el vídeo. Pega el enlace completo de YouTube.');
  return 'https://www.youtube.com/watch?v='+videoId;
 }
-function roster(){const body=$('roster');body.replaceChildren();for(const s of students){const tr=document.createElement('tr');const fields=[s.username,s.google_email||'Pendiente',(s.access||[]).filter(x=>x.granted).length,(s.access||[]).filter(x=>x.granted&&x.drive_verified).length];fields.forEach(val=>{const td=document.createElement('td');td.textContent=String(val);tr.append(td)});tr.addEventListener('click',()=>{$('student').value=s.username;updateView();window.scrollTo({top:0,behavior:'smooth'});});body.append(tr);}}
+const pending=new Map();
+let matrixMode='granted',matrixSaving=false;
+const shortMonths=['Sep.','Oct.','Nov.','Dic.','Ene.','Feb.','Mar.','Abr.','May.','Jun.','Jul.','Ago.'];
+const matrixKey=(user,month)=>JSON.stringify([user,month]);
+const equalAccess=(a,b)=>a.granted===b.granted&&a.drive_verified===b.drive_verified;
+function originalAccess(student,month){
+ const a=(student.access||[]).find(x=>x.month_id===month);
+ return {granted:a?.granted===true,drive_verified:a?.drive_verified===true};
+}
+function effectiveAccess(student,month){return pending.get(matrixKey(student.username,month))?.next||originalAccess(student,month);}
+function actualMonth(){
+ const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Madrid',year:'numeric',month:'2-digit'}).formatToParts(new Date());
+ return parts.find(p=>p.type==='year').value+'-'+parts.find(p=>p.type==='month').value;
+}
+function matrixResult(t,error=false){$('matrixResult').textContent=t;$('matrixResult').classList.toggle('matrix-result-error',error);}
+function setPending(student,month,field,value){
+ const key=matrixKey(student.username,month),original=originalAccess(student,month),prior=pending.get(key);
+ const next={...effectiveAccess(student,month),[field]:value};
+ if(!next.granted)next.drive_verified=false;
+ const base=prior?.base||original;
+ if(equalAccess(next,base))pending.delete(key);
+ else pending.set(key,{username:student.username,month_id:month,base,next});
+}
+function roster(){
+ const body=$('roster'),head=$('matrixHead'),now=actualMonth(),valid=ids.filter(id=>loadedMonths.some(m=>m.id===id));
+ const q=$('matrixSearch').value.trim().toLocaleLowerCase('es'),filter=$('matrixFilter').value;
+ const sorted=[...students].sort((a,b)=>a.username.localeCompare(b.username,'es',{numeric:true}));
+ const active=valid.includes(now)?students.filter(s=>effectiveAccess(s,now).granted).length:null;
+ $('matrixFilter').options[1].disabled=active===null;$('matrixFilter').options[2].disabled=active===null;
+ const shown=sorted.filter(s=>(s.username.toLocaleLowerCase('es').includes(q)||(s.google_email||'').toLocaleLowerCase('es').includes(q))&&(active===null||filter==='all'||(filter==='active')===effectiveAccess(s,now).granted));
+ $('matrixCount').textContent=shown.length+' de '+students.length+' alumnos';
+ $('matrixSummary').textContent=students.length+' alumnos'+(active===null?'':' · '+active+' con el mes actual abonado · '+(students.length-active)+' sin el mes actual abonado')+(pending.size?' (incluye cambios pendientes)':'');
+ $('matrixHint').textContent=matrixMode==='granted'?'Marca los meses abonados. Al retirar un mes también se desmarca su verificación de Drive.':'Marca únicamente los permisos de Google Drive que ya has verificado. Solo se permite verificar meses abonados.';
+ $('tabPaid').setAttribute('aria-pressed',String(matrixMode==='granted'));$('tabDrive').setAttribute('aria-pressed',String(matrixMode==='drive_verified'));
+ const header=document.createElement('tr');
+ function heading(label){const h=document.createElement('th');h.scope='col';h.textContent=label;header.append(h);return h;}
+ heading('Alumno');
+ for(const month of valid){
+  const h=heading(shortMonths[ids.indexOf(month)]+' '+month.slice(2,4));h.title=months[ids.indexOf(month)];
+  if(month===now)h.classList.add('current-month');
+  const count=document.createElement('span');count.className='month-count';count.textContent=students.filter(s=>effectiveAccess(s,month)[matrixMode]).length+'/'+students.length;h.append(count);
+ }
+ heading('Total');head.replaceChildren(header);body.replaceChildren();
+ for(const student of shown){
+  const tr=document.createElement('tr'),name=document.createElement('td'),link=document.createElement('button');
+  link.type='button';link.className='student-link';link.textContent=student.username;link.title=student.google_email||'Editar ficha individual';link.disabled=matrixSaving;
+  link.addEventListener('click',()=>{$('student').value=student.username;updateView();$('student').scrollIntoView({behavior:'smooth',block:'center'});$('student').focus({preventScroll:true});});
+  name.append(link);tr.append(name);
+  for(const month of valid){
+   const td=document.createElement('td'),box=document.createElement('input'),value=effectiveAccess(student,month);
+   box.type='checkbox';box.checked=value[matrixMode];box.disabled=matrixSaving||(matrixMode==='drive_verified'&&!value.granted);
+   box.setAttribute('aria-label',student.username+' · '+months[ids.indexOf(month)]+' · '+(matrixMode==='granted'?'Mes abonado':'Drive verificado'));
+   if(pending.has(matrixKey(student.username,month)))td.classList.add('changed');
+   box.addEventListener('change',()=>{setPending(student,month,matrixMode,box.checked);matrixResult('');const wrap=$('roster').parentElement.parentElement;const pos=wrap.scrollLeft;const top=wrap.scrollTop;roster();wrap.scrollLeft=pos;wrap.scrollTop=top;const next=[...body.querySelectorAll('input')].find(x=>x.getAttribute('aria-label')===box.getAttribute('aria-label'));next?.focus({preventScroll:true});});
+   td.append(box);tr.append(td);
+  }
+  const total=document.createElement('td');total.textContent=valid.filter(m=>effectiveAccess(student,m)[matrixMode]).length;tr.append(total);body.append(tr);
+ }
+ if(!shown.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=valid.length+2;td.className='empty-matrix';td.textContent='No hay alumnos que coincidan con los filtros.';tr.append(td);body.append(tr);}
+ $('matrixPending').textContent=matrixSaving?'Guardando cambios…':pending.size?pending.size+' mensualidad(es) con cambios pendientes':'Sin cambios pendientes';
+ $('matrixSave').disabled=matrixSaving||!pending.size;$('matrixDiscard').disabled=matrixSaving||!pending.size;
+ for(const id of ['tabPaid','tabDrive','matrixSearch','matrixFilter','saveEmail','saveAccess','saveClass','saveVideo'])$(id).disabled=matrixSaving;
+}
+$('tabPaid').addEventListener('click',()=>{matrixMode='granted';roster();});
+$('tabDrive').addEventListener('click',()=>{matrixMode='drive_verified';roster();});
+$('matrixSearch').addEventListener('input',roster);$('matrixFilter').addEventListener('change',roster);
+$('matrixDiscard').addEventListener('click',()=>{if(matrixSaving||!confirm('¿Descartar los cambios sin guardar?'))return;pending.clear();matrixResult('Cambios descartados.');roster();});
+$('matrixSave').addEventListener('click',async()=>{
+ if(matrixSaving||!pending.size)return;
+ const changes=[...pending.values()];
+ const withdrawals=changes.filter(c=>c.base.granted&&!c.next.granted).length;
+ const driveChanges=changes.filter(c=>!c.base.drive_verified&&c.next.drive_verified).length;
+ if(withdrawals&&!confirm('Vas a retirar '+withdrawals+' mensualidad(es) abonada(s). Solo hazlo si fue un error de registro. ¿Continuar?'))return;
+ if(driveChanges&&!confirm('¿Has comprobado los '+driveChanges+' permisos REALES de Google Drive? Marcar las casillas no concede acceso.'))return;
+ matrixSaving=true;roster();matrixResult('Comprobando los datos actuales…');let saved=0;
+ try{
+  const fresh=await api('admin_snapshot');if(fresh.is_admin!==true||!Array.isArray(fresh.students))throw Error('No se pudo comprobar la autorización.');
+  for(const c of changes){
+   const student=fresh.students.find(s=>s.username===c.username);
+   if(!student)throw Error('Un alumno ya no figura en el listado. Descarta y vuelve a cargar antes de continuar.');
+   const value=originalAccess(student,c.month_id);
+   if(!equalAccess(value,c.base)&&!equalAccess(value,c.next))throw Error('Hay datos modificados desde otra sesión. Descarta los cambios y actualiza la página para evitar sobrescribirlos.');
+  }
+  for(const c of changes){
+   const student=fresh.students.find(s=>s.username===c.username);
+   if(!equalAccess(originalAccess(student,c.month_id),c.next))await api('set_access',{username:c.username,month_id:c.month_id,...c.next});
+   pending.delete(matrixKey(c.username,c.month_id));saved++;
+   matrixResult(saved+' de '+changes.length+' cambios guardados.');
+  }
+  await reload();matrixResult(saved+' cambios guardados correctamente.');
+ }catch(e){
+  try{await reload();for(const [key,c] of pending){const student=students.find(s=>s.username===c.username);if(student&&equalAccess(originalAccess(student,c.month_id),c.next))pending.delete(key);}}catch{}
+  matrixResult(saved+' de '+changes.length+' cambios confirmados. '+e.message+' Revisa los cambios pendientes antes de volver a guardar.',true);
+ }finally{matrixSaving=false;roster();}
+});
+window.addEventListener('beforeunload',e=>{if(pending.size||matrixSaving){e.preventDefault();e.returnValue='';}});
 async function api(action,payload={}){const token=sessionStorage.getItem(KEY);if(!token)throw Error('Inicia sesión primero en bcpol.es.');const res=await fetch(API,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({...payload,action,token})});const data=await res.json().catch(()=>({}));if(!res.ok||!data.ok)throw Error(data.error||'Operación no autorizada.');return data;}
 async function reload(keepUser){const data=await api('admin_snapshot');if(data.is_admin!==true)throw Error('Esta cuenta no dispone de acceso administrativo.');students=Array.isArray(data.students)?data.students:[];loadedMonths=Array.isArray(data.months)?data.months:[];loadedClasses=Array.isArray(data.classes)?data.classes:[];const original=keepUser||$('student').value;fillSelect('student',students.map(s=>({value:s.username,label:s.username})));if(students.some(x=>x.username===original))$('student').value=original;updateView();refreshVideoChoices();roster();panel.classList.remove('hidden');statusEl.textContent=students.length+' cuentas cargadas. Control administrativo protegido por el servidor.';}
 function message(t,error){statusEl.textContent=t;statusEl.style.color=error?'#9a2744':'#284363';}
-async function save(action,payload){try{message('Guardando…');await api(action,payload);await reload(payload.username);message('Cambios guardados correctamente. Comprueba por separado los permisos reales de Google Drive.');}catch(e){message(e.message,true);}}
+async function save(action,payload){if(pending.size||matrixSaving){message('Guarda o descarta primero los cambios de la tabla.',true);return;}try{message('Guardando…');await api(action,payload);await reload(payload.username);message('Cambios guardados correctamente. Comprueba por separado los permisos reales de Google Drive.');}catch(e){message(e.message,true);}}
 fillSelect('month',ids.map((id,i)=>({value:id,label:months[i]})));fillSelect('classMonth',ids.map((id,i)=>({value:id,label:months[i]})));
 $('videoClass').addEventListener('change',refreshVideoField);
 $('saveVideo').addEventListener('click',async()=>{
+ if(pending.size||matrixSaving){message('Guarda o descarta primero los cambios de la tabla.',true);return;}
  const chosen=loadedClasses.find(c=>(c.month_id+'|'+c.lesson_number)===$('videoClass').value);
  if(!chosen){message('Selecciona una clase registrada.',true);return;}
  let youtubeUrl;try{youtubeUrl=canonicalYouTube($('youtubeLink').value);}catch(e){message(e.message,true);return;}
