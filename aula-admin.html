@@ -46,10 +46,15 @@
  <p id="matrixResult" class="hint" role="status"></p>
  <p id="monthFootnote" class="hint">No desmarques mensualidades anteriores por una baja. Drive verificado solo registra que has comprobado el permiso real; no lo concede ni lo retira.</p><div id="servicePanel" class="hidden"><p class="hint">Gestiona los permisos individuales de Apuntes Online, Podcast y Planning. Telegram se mantiene independiente.</p><p id="driveStatus" class="hint" role="status">Comprobando conexión de Google Drive…</p><div class="tablewrap matrix-scroll"><table class="tbl service-table"><thead><tr><th>Alumno</th><th>Apuntes Online</th><th>Podcast</th><th>Planning</th><th>BCPOL TEST</th></tr></thead><tbody id="serviceRoster"></tbody></table></div><p class="hint">El Planning conserva el requisito de mensualidad abonada. Las casillas de Drive controlan el permiso de lector de las dos carpetas principales. Los permisos independientes de archivos, colectivos o heredados requieren revisión manual. No se modifican correos sin vincular, permisos de editor ni propietarios.</p><div class="matrix-footer"><span id="servicePending" role="status">Cargando permisos…</span><div class="actions"><button type="button" class="matrix-secondary" id="serviceDiscard" disabled>Descartar cambios</button><button type="button" class="btn" id="serviceSave" disabled>Guardar cambios</button></div></div><p class="hint" id="serviceResult" role="status"></p><div class="actions"><a class="matrix-link" href="https://drive.google.com/" target="_blank" rel="noopener noreferrer">Gestionar carpetas en Drive ↗</a><a class="matrix-link" href="https://t.me/BCPOLTEST_bot" target="_blank" rel="noopener noreferrer">Abrir BCPOL TEST ↗</a></div></div>
 </section>
-<section class="card"><h2>1. Datos del alumno</h2><div class="field"><label for="student">Usuario BCPOL</label><select id="student"></select></div><div class="field"><label for="email">Correo de Google Drive</label><input id="email" type="email" placeholder="alumno@gmail.com" autocomplete="off"></div><div class="actions"><button id="saveEmail" class="btn">Guardar correo</button><span class="hint">El alumno debe autorizarse en Drive por separado.</span></div></section>
-<section class="card"><h2>2. Acceso por mensualidad</h2><div class="field"><label for="month">Mensualidad</label><select id="month"></select></div><div class="checkrow"><label><input id="paid" type="checkbox"> Mes abonado</label><label><input id="drive" type="checkbox"> Permisos Drive verificados</label></div><div class="actions"><button id="saveAccess" class="btn">Guardar acceso</button></div><p class="hint">Un mes abonado se conserva indefinidamente. Si el alumno causa baja, no desmarques meses anteriores. «Drive verificado» se marca solo tras confirmar que el correo tiene permiso para la carpeta correspondiente.</p></section>
-<section class="card full"><h2>3. Registrar una clase</h2><div class="layout"><div class="field"><label for="classMonth">Mes</label><select id="classMonth"></select></div><div class="field"><label for="classNum">Número de clase</label><input id="classNum" type="number" min="1" max="70" placeholder="Ej. 9"></div></div><div class="field"><label for="classTitle">Título de la clase</label><input id="classTitle" type="text" placeholder="Clase 9 · Mixto"></div><div class="field"><label for="classLink">Carpeta de Google Drive</label><input id="classLink" type="url" placeholder="https://drive.google.com/drive/folders/…"></div><div class="checkrow"><label><input type="checkbox" id="published"> Publicar clase (solo con los permisos correctamente configurados)</label></div><button id="saveClass" class="btn">Guardar clase</button><p class="hint">Las carpetas no se publican por defecto. Se recomienda una carpeta independiente por mensualidad, sin heredar permisos de una carpeta general compartida.</p></section>
-<section class="card full"><h2>4. Vídeos de YouTube por clase</h2>
+<section class="card full"><h2>1. Datos del alumno</h2>
+<div class="field"><label for="student">Usuario BCPOL</label><select id="student"></select></div>
+<div class="layout">
+ <div><div class="field"><label for="email">Correo de Google Drive</label><input id="email" type="email" placeholder="alumno@gmail.com" autocomplete="off"></div><div class="actions"><button id="saveEmail" class="btn">Guardar correo</button><span class="hint">El correo identifica los permisos de Drive.</span></div></div>
+ <div><div class="field"><label for="telegramId">ID de Telegram</label><input id="telegramId" type="text" inputmode="numeric" maxlength="19" autocomplete="off" placeholder="Ej. 1234567890" disabled></div><div class="actions"><button id="saveTelegram" class="btn" type="button" disabled>Guardar ID de Telegram</button><button id="reloadTelegram" class="matrix-secondary" type="button">Actualizar IDs</button></div><p class="hint" id="telegramStatus" role="status">El ID numérico se obtiene con /miid en el bot. Guardarlo no cambia el acceso a BCPOL TEST.</p></div>
+</div>
+</section>
+<section class="card full"><h2>2. Registrar una clase</h2><div class="layout"><div class="field"><label for="classMonth">Mes</label><select id="classMonth"></select></div><div class="field"><label for="classNum">Número de clase</label><input id="classNum" type="number" min="1" max="70" placeholder="Ej. 9"></div></div><div class="field"><label for="classTitle">Título de la clase</label><input id="classTitle" type="text" placeholder="Clase 9 · Mixto"></div><div class="field"><label for="classLink">Carpeta de Google Drive</label><input id="classLink" type="url" placeholder="https://drive.google.com/drive/folders/…"></div><div class="checkrow"><label><input type="checkbox" id="published"> Publicar clase (solo con los permisos correctamente configurados)</label></div><button id="saveClass" class="btn">Guardar clase</button><p class="hint">Las carpetas no se publican por defecto. Se recomienda una carpeta independiente por mensualidad, sin heredar permisos de una carpeta general compartida.</p></section>
+<section class="card full"><h2>3. Vídeos de YouTube por clase</h2>
 <p class="hint">Selecciona una clase ya registrada y pega el enlace de su grabación. El enlace aparecerá en el Aula Virtual únicamente a los alumnos con acceso a esa mensualidad. No modifica las carpetas ni los pagos.</p>
 <div class="field"><label for="videoClass">Clase</label><select id="videoClass"></select></div>
 <div class="field"><label for="youtubeLink">Enlace del vídeo de YouTube</label><input id="youtubeLink" type="url" maxlength="500" placeholder="https://youtu.be/… o https://www.youtube.com/watch?v=…" autocomplete="off"></div>
@@ -68,8 +73,7 @@ const $=id=>document.getElementById(id);
 let students=[],loadedMonths=[],loadedClasses=[];
 function fillSelect(id,arr){const select=$(id);select.replaceChildren();arr.forEach(x=>{const opt=document.createElement('option');opt.value=x.value;opt.textContent=x.label;select.append(opt);});}
 function current(){return students.find(s=>s.username===$('student').value);}
-function updateView(){const s=current();if(!s)return;$('email').value=s.google_email||'';refreshChecks();}
-function refreshChecks(){const s=current(),a=(s?.access||[]).find(x=>x.month_id===$('month').value);$('paid').checked=a?.granted===true;$('drive').checked=a?.drive_verified===true;}
+function updateView(){const s=current();if(!s)return;$('email').value=s.google_email||'';updateTelegramField();}
 function refreshVideoField(){
  const selected=$('videoClass').value;
  const currentVideo=loadedClasses.find(c=>(c.month_id+'|'+c.lesson_number)===selected);
@@ -256,7 +260,7 @@ function roster(){
  if(!shown.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=valid.length+2;td.className='empty-matrix';td.textContent='No hay alumnos que coincidan con los filtros.';tr.append(td);body.append(tr);}
  $('matrixPending').textContent=matrixSaving?'Guardando cambios…':pending.size?pending.size+' mensualidad(es) con cambios pendientes':'Sin cambios pendientes';
  $('matrixSave').disabled=matrixSaving||!pending.size;$('matrixDiscard').disabled=matrixSaving||!pending.size;
- for(const id of ['tabPaid','tabDrive','tabServices','matrixSearch','matrixFilter','saveEmail','saveAccess','saveClass','saveVideo'])$(id).disabled=matrixSaving||serviceBusy;
+ for(const id of ['tabPaid','tabDrive','tabServices','matrixSearch','matrixFilter','saveEmail','saveClass','saveVideo'])$(id).disabled=matrixSaving||serviceBusy;
 }
 $('tabPaid').addEventListener('click',()=>{if(serviceDirty()){serviceMessage('Guarda o descarta primero los cambios de servicios.',true);return;}mainTab='months';matrixMode='granted';roster();});
 $('tabDrive').addEventListener('click',()=>{matrixMode=matrixMode==='drive_verified'?'granted':'drive_verified';roster();});
@@ -293,10 +297,46 @@ $('matrixSave').addEventListener('click',async()=>{
 });
 window.addEventListener('beforeunload',e=>{if(pending.size||matrixSaving){e.preventDefault();e.returnValue='';}});
 async function api(action,payload={}){const token=sessionStorage.getItem(KEY);if(!token)throw Error('Inicia sesión primero en bcpol.es.');const res=await fetch(API,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({...payload,action,token})});const data=await res.json().catch(()=>({}));if(!res.ok||!data.ok)throw Error(data.error||'Operación no autorizada.');return data;}
-async function reload(keepUser){const data=await api('admin_snapshot');if(data.is_admin!==true)throw Error('Esta cuenta no dispone de acceso administrativo.');students=Array.isArray(data.students)?data.students:[];loadedMonths=Array.isArray(data.months)?data.months:[];loadedClasses=Array.isArray(data.classes)?data.classes:[];const original=keepUser||$('student').value;fillSelect('student',students.map(s=>({value:s.username,label:s.username})));if(students.some(x=>x.username===original))$('student').value=original;updateView();refreshVideoChoices();roster();panel.classList.remove('hidden');statusEl.textContent=students.length+' cuentas cargadas. Control administrativo protegido por el servidor.';}
+let telegramIds=null,telegramBusy=false;
+function telegramMessage(t,bad=false){$('telegramStatus').textContent=t;$('telegramStatus').classList.toggle('matrix-result-error',bad);}
+function updateTelegramField(){
+ const u=current()?.username;
+ $('telegramId').value=u&&telegramIds?telegramIds.get(u)||'':'';
+ $('telegramId').disabled=telegramBusy||!u||!telegramIds;
+ $('saveTelegram').disabled=telegramBusy||!u||!telegramIds;
+ $('reloadTelegram').disabled=telegramBusy;
+}
+async function loadTelegramIds(){
+ if(telegramBusy)return;
+ telegramBusy=true;updateTelegramField();telegramMessage('Cargando IDs de Telegram…');
+ try{
+  const data=await serviceApi('snapshot',{},'bcpol-student-telegram');
+  if(!data.ids||typeof data.ids!=='object'||Array.isArray(data.ids))throw Error('Respuesta de IDs incorrecta.');
+  telegramIds=new Map(Object.entries(data.ids));
+  telegramMessage(telegramIds.size+' alumnos vinculados. El ID numérico se obtiene con /miid. Guardarlo no modifica el acceso al bot.');
+ }catch(e){telegramIds=null;telegramMessage(e.message,true);}
+ finally{telegramBusy=false;updateTelegramField();}
+}
+$('reloadTelegram').addEventListener('click',loadTelegramIds);
+$('saveTelegram').addEventListener('click',async()=>{
+ const u=current()?.username,id=$('telegramId').value.trim();
+ if(!u||!telegramIds||telegramBusy)return;
+ if(id&&!/^[1-9][0-9]{0,18}$/.test(id)){telegramMessage('Introduce un ID numérico positivo, sin @ ni espacios.',true);return;}
+ if(id===(telegramIds.get(u)||'')){telegramMessage('El ID no ha cambiado.');return;}
+ if(!id&&!confirm('¿Eliminar el ID vinculado a este alumno? No se modificará el acceso al bot.'))return;
+ telegramBusy=true;$('telegramId').disabled=true;$('saveTelegram').disabled=true;$('reloadTelegram').disabled=true;telegramMessage('Guardando ID…');
+ try{
+  const data=await serviceApi('set',{username:u,telegram_id:id},'bcpol-student-telegram');
+  if((data.telegram_id||'')!==id)throw Error('El servidor no confirmó el ID.');
+  if(id)telegramIds.set(u,id);else telegramIds.delete(u);
+  telegramMessage(id?'ID guardado correctamente. El acceso al bot no ha cambiado.':'ID eliminado. El acceso al bot no ha cambiado.');
+ }catch(e){telegramMessage(e.message,true);}
+ finally{telegramBusy=false;if(current()?.username!==u||telegramIds.get(u)===id||(!id&&!telegramIds.has(u)))updateTelegramField();else{$('telegramId').disabled=false;$('saveTelegram').disabled=false;$('reloadTelegram').disabled=false;}}
+});
+async function reload(keepUser){const data=await api('admin_snapshot');if(data.is_admin!==true)throw Error('Esta cuenta no dispone de acceso administrativo.');students=Array.isArray(data.students)?data.students:[];loadedMonths=Array.isArray(data.months)?data.months:[];loadedClasses=Array.isArray(data.classes)?data.classes:[];const original=keepUser||$('student').value;fillSelect('student',students.map(s=>({value:s.username,label:s.username})));if(students.some(x=>x.username===original))$('student').value=original;updateView();refreshVideoChoices();roster();panel.classList.remove('hidden');statusEl.textContent=students.length+' cuentas cargadas. Control administrativo protegido por el servidor.';if(!telegramIds)await loadTelegramIds();}
 function message(t,error){statusEl.textContent=t;statusEl.style.color=error?'#9a2744':'#284363';}
 async function save(action,payload){if(pending.size||matrixSaving||serviceDirty()||serviceBusy){message('Guarda o descarta primero los cambios de la tabla.',true);return;}try{message('Guardando…');await api(action,payload);await reload(payload.username);message('Cambios guardados correctamente. Comprueba por separado los permisos reales de Google Drive.');}catch(e){message(e.message,true);}}
-fillSelect('month',ids.map((id,i)=>({value:id,label:months[i]})));fillSelect('classMonth',ids.map((id,i)=>({value:id,label:months[i]})));
+fillSelect('classMonth',ids.map((id,i)=>({value:id,label:months[i]})));
 $('videoClass').addEventListener('change',refreshVideoField);
 $('saveVideo').addEventListener('click',async()=>{
  if(pending.size||matrixSaving||serviceDirty()||serviceBusy){message('Guarda o descarta primero los cambios de la tabla.',true);return;}
@@ -311,12 +351,8 @@ $('saveVideo').addEventListener('click',async()=>{
    message(youtubeUrl?'Vídeo guardado. Ya aparecerá en el Aula Virtual para los alumnos autorizados.':'Vídeo retirado de la ficha de la clase.');
  }catch(e){message(e.message,true);}finally{btn.disabled=false;}
 });
-$('student').addEventListener('change',updateView);$('month').addEventListener('change',refreshChecks);$('paid').addEventListener('change',()=>{if(!$('paid').checked)$('drive').checked=false;});
+$('student').addEventListener('change',updateView);
 $('saveEmail').addEventListener('click',()=>{const s=current();if(!s)return;save('set_email',{username:s.username,google_email:$('email').value.trim()});});
-$('saveAccess').addEventListener('click',()=>{const s=current();if(!s)return;const paid=$('paid').checked,ready=$('drive').checked;if(ready&&!paid){message('No se puede verificar Drive sin mensualidad abonada.',true);return;}const previous=(s.access||[]).find(x=>x.month_id===$('month').value);
- if(previous?.granted===true && !paid && !confirm('Este alumno ya tenía esta mensualidad. Solo desmarca un mes si fue un error de registro. ¿Continuar?'))return;
- if(ready && previous?.drive_verified!==true && !confirm('¿Has comprobado que el correo del alumno tiene acceso REAL en la carpeta del mes de Google Drive? Marcar esta casilla no concede permisos.'))return;
- save('set_access',{username:s.username,month_id:$('month').value,granted:paid,drive_verified:ready});});
 $('saveClass').addEventListener('click',()=>{const n=Number($('classNum').value),title=$('classTitle').value.trim();if(!Number.isInteger(n)||n<1||n>70||!title){message('Indica número y título de clase válidos.',true);return;}let url;try{url=canonicalDriveFolder($('classLink').value);}catch(e){message(e.message,true);return;}$('classLink').value=url;save('save_class',{month_id:$('classMonth').value,lesson_number:n,title,drive_url:url,published:$('published').checked});});
 async function boot(){
  const identity=await api('mine');
