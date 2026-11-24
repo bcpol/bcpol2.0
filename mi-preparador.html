@@ -43,6 +43,9 @@ fieldset{border:0;padding:0;margin:18px 0}legend{font-weight:800;margin:0 0 10px
 .media-link.pdf:hover{background:#dbeaff}
 .media-link.podcast{background:#eaf7f5;color:#126b60;border-color:#b5ded8}
 .media-link.youtube{background:#fff2f0;color:#a92a25;border-color:#efc9c3}
+.media-link.test{background:#116b70;color:#fff;border-color:#0d5459}
+.media-link.test:hover{background:#084b50;color:#fff}
+.day-task .type.test{color:#116b70}
 .media-link:focus-visible,.media-video-menu a:focus-visible{outline:2px solid #197fe5;outline-offset:2px}
 .media-videos{position:relative;display:inline-block}
 .media-videos>summary{list-style:none;cursor:pointer}
@@ -212,6 +215,25 @@ function safeDriveUrl(raw){
 }
 function node(tag,text,cls){const e=document.createElement(tag);if(text!==undefined&&text!==null)e.textContent=String(text);if(cls)e.className=cls;return e;}
 function keyDoc(d){return d.materia+":"+d.tema_id;}
+// Recuento exacto del banco ordinario 1.4.1: 199 apuntes, 3725 preguntas.
+const TEST_COUNTS=Object.freeze({"trafico:9":31,"administrativa:9":28,"seguridad:95":25,"trafico:1":22,"trafico:2":12,"trafico:3":80,"trafico:4":26,"trafico:5":14,"trafico:6":37,"trafico:7":39,"trafico:8":30,"trafico:10":44,"trafico:11":21,"trafico:12":24,"trafico:13":19,"trafico:14":40,"trafico:15":17,"trafico:16":31,"trafico:17":19,"trafico:18":17,"trafico:19":12,"trafico:20":6,"trafico:21":17,"trafico:22":23,"trafico:23":13,"trafico:24":18,"trafico:25":57,"trafico:26":35,"trafico:27":11,"trafico:28":12,"trafico:29":18,"trafico:30":26,"trafico:31":26,"trafico:32":8,"trafico:33":12,"trafico:34":11,"trafico:35":9,"trafico:36":9,"trafico:37":16,"trafico:38":19,"trafico:39":17,"trafico:40":6,"trafico:41":15,"trafico:42":12,"trafico:43":6,"trafico:44":19,"trafico:45":8,"trafico:47":10,"trafico:48":17,"trafico:49":6,"trafico:50":10,"trafico:52":7,"trafico:53":7,"trafico:57":7,"trafico:61":8,"trafico:63":5,"trafico:64":7,"trafico:65":5,"trafico:66":6,"trafico:70":5,"trafico:71":1,"trafico:73":2,"trafico:74":6,"trafico:77":15,"trafico:79":26,"trafico:80":19,"trafico:82":56,"trafico:83":24,"trafico:84":23,"trafico:85":11,"trafico:86":54,"administrativa:1":29,"administrativa:3":28,"administrativa:4":12,"administrativa:5":60,"administrativa:6":33,"administrativa:7":25,"administrativa:8":20,"administrativa:10":17,"administrativa:11":12,"administrativa:12":9,"administrativa:13":8,"administrativa:14":12,"administrativa:15":16,"administrativa:16":68,"administrativa:17":30,"administrativa:18":38,"administrativa:19":21,"administrativa:21":12,"administrativa:22":22,"administrativa:23":20,"administrativa:24":20,"administrativa:25":15,"administrativa:26":9,"administrativa:28":10,"administrativa:30":12,"administrativa:32":20,"administrativa:33":4,"administrativa:36":13,"administrativa:39":13,"administrativa:42":6,"administrativa:43":17,"administrativa:44":8,"administrativa:45":6,"administrativa:46":95,"administrativa:47":10,"administrativa:48":75,"administrativa:49":8,"administrativa:52":17,"seguridad:1":11,"seguridad:2":5,"seguridad:3":41,"seguridad:4":36,"seguridad:5":26,"seguridad:6":22,"seguridad:7":15,"seguridad:8":10,"seguridad:9":6,"seguridad:10":29,"seguridad:11":24,"seguridad:12":25,"seguridad:13":27,"seguridad:14":47,"seguridad:15":30,"seguridad:16":15,"seguridad:17":22,"seguridad:17.1":18,"seguridad:18":9,"seguridad:19":19,"seguridad:20":32,"seguridad:21":26,"seguridad:22":18,"seguridad:23":33,"seguridad:24":10,"seguridad:25":8,"seguridad:26":24,"seguridad:27":12,"seguridad:28":12,"seguridad:29":8,"seguridad:30":18,"seguridad:31":12,"seguridad:31.1":6,"seguridad:32":6,"seguridad:33":6,"seguridad:34":9,"seguridad:35":38,"seguridad:36":15,"seguridad:37":24,"seguridad:38":15,"seguridad:39":20,"seguridad:40":20,"seguridad:41":38,"seguridad:42":16,"seguridad:43":33,"seguridad:44":6,"seguridad:45":24,"seguridad:46":27,"seguridad:47":10,"seguridad:48":37,"seguridad:49":45,"seguridad:50":16,"seguridad:51":20,"seguridad:55":15,"seguridad:57":14,"seguridad:59":9,"seguridad:64":4,"seguridad:66":11,"seguridad:67":15,"seguridad:68":8,"seguridad:69":17,"seguridad:70":13,"seguridad:73":2,"seguridad:74":10,"seguridad:77":12,"seguridad:78":16,"seguridad:80":12,"seguridad:87":7,"seguridad:89":4,"seguridad:90":18,"seguridad:91":9,"seguridad:92":4,"seguridad:93":37,"seguridad:96":17,"seguridad:97":15,"seguridad:98":3,"seguridad:99":3,"seguridad:100":1,"seguridad:102":27,"seguridad:103":16,"seguridad:104":19,"seguridad:105":6,"seguridad:106":18,"seguridad:107":5,"seguridad:108":22,"seguridad:109":18,"seguridad:110":8,"seguridad:112":7,"seguridad:113":8,"seguridad:114":10});
+function testRecommendation(doc,budget,weight,dailyMinutes){
+ const available=TEST_COUNTS[keyDoc(doc)]||0;
+ if(!available)return null;
+ const desired=weight>=4&&dailyMinutes>=120&&budget>=25&&available>=25?25:10;
+ const count=Math.min(available,desired);
+ const minutes=Math.max(5,count);
+ if(minutes>budget)return null;
+ return {count,minutes,menu:desired,url:"https://t.me/BCPOLTEST_bot?start="+encodeURIComponent("nota_"+doc.materia+"_"+String(doc.tema_id).replace(".","_"))};
+}
+function addTestTask(container,doc,rec){
+ const row=node("div",null,"day-task"),tag=node("span","TEST","type test"),detail=node("div",null,"detail"),links=node("div",null,"links");
+ detail.append(node("strong","Hacer "+rec.count+" "+(rec.count===1?"pregunta":"preguntas")+" · "+doc.titulo),
+  node("small",rec.minutes+" min orientativos · Selecciona "+rec.menu+" en Telegram; el bot puede ofrecer menos si quedan pocas preguntas pendientes."));
+ const a=node("a","🧠 Hacer test","note-link media-link test");
+ a.href=rec.url;a.target="_blank";a.rel="noopener noreferrer";a.setAttribute("aria-label","Hacer test de "+doc.titulo+" en BCPOL TRAINING");
+ links.append(a);row.append(tag,detail,links);container.append(row);
+}
 function markNotice(message,bad=false){
  const banner=$("mark-notice");banner.textContent=message;banner.className=bad?"bad":"";banner.hidden=false;
  clearTimeout(markNoticeTimer);markNoticeTimer=setTimeout(()=>banner.hidden=true,4300);
@@ -477,7 +499,7 @@ function renderPlan(){
  $("week-total").textContent=studyDays.length+" días de estudio personal restantes · "+Math.floor(total/60)+" h "+String(total%60).padStart(2,"0")+" min de estudio autónomo disponibles"+(extraClassReview?" (incluye "+extraClassReview+" min adicionales para repaso el día de clase)":"")+". "+
   (hasClass?"Clase BCPOL: 150 min reservados el "+niceDate(w.fecha_clase+"T12:00:00Z")+". ":"")+
   (w?"Supuesto semanal: "+needed+(caseDay?", el "+niceDate(caseDay.iso+"T12:00:00Z"):"")+". ":"")+
-  "El resto del tiempo se dedica a los apuntes de la clase, avance autónomo y repasos.";
+  "El resto del tiempo se dedica a apuntes, avance autónomo, repasos y test específicos al completar la lectura, dentro de tu disponibilidad.";
  if(!days.length){agenda.append(node("p","No tienes días de estudio seleccionados antes de la próxima clase. Ajusta tu disponibilidad.","muted"));return;}
  if(w&&caseMode==="vistazo"){
   agenda.append(node("p","Con menos de 2 horas seguidas no se programa la resolución del supuesto: solo su lectura, comprensión del enunciado y revisión rápida de las casuísticas. Quedará pendiente de resolver.","week-help"));
@@ -550,6 +572,18 @@ function renderPlan(){
   savePlanChoices();renderPlan();markNotice("Avance voluntario añadido: "+doc.titulo+" ("+minutes+" min).");
  };
  const remaining=new Map();
+ const pendingTests=new Map(),scheduledTests=new Set();
+ const queueTest=doc=>{const k=keyDoc(doc);if(TEST_COUNTS[k]&&!scheduledTests.has(k))pendingTests.set(k,doc);};
+ const scheduleTests=(container,budget,dailyMinutes,maxTests=Infinity)=>{
+  let spent=0,n=0;
+  for(const [k,doc] of pendingTests){
+   if(n>=maxTests)break;
+   const rec=testRecommendation(doc,budget-spent,importance(doc,weights),dailyMinutes);
+   if(!rec)continue;
+   addTestTask(container,doc,rec);spent+=rec.minutes;n++;pendingTests.delete(k);scheduledTests.add(k);
+  }
+  return {spent,n};
+ };
  const timeKey=(type,d)=>type+":"+keyDoc(d);
  const planned=(type,d)=>estimatedMinutes(d,type,weights,scheduleMarks.has(keyDoc(d)));
  const left=(type,d)=>remaining.has(timeKey(type,d))?remaining.get(timeKey(type,d)):planned(type,d);
@@ -606,6 +640,7 @@ function renderPlan(){
    links.append(button);
   }
   row.append(tag,detail,links);container.append(row);
+  return {doc:shown,complete:compatible?displayMinutes>=total:elapsed+displayMinutes>=total};
  };
  const makeCaseTask=(container,minutes)=>{
   const row=node("div",null,"day-task"),short=caseMode==="vistazo",tag=node("span",short?"LECTURA":"SUPUESTO","type other"),detail=node("div",null,"detail"),links=node("div",null,"links");
@@ -629,11 +664,13 @@ function renderPlan(){
    detail.append(node("small",time+"150 min de clase semanal. No se asignan materias nuevas ni supuesto este día."));
    row.append(tag,detail);box.append(row);
    if(extraClassReview>=15){
-    classReviews.forEach(({doc,minutes,alreadyStudied})=>
-     makeTask(box,"REPASO",doc,alreadyStudied?"Apunte ya estudiado · prioridad de repaso por frecuencia en exámenes":"Revisión breve del contenido del supuesto semanal",minutes,0,null,day.iso)
-    );
+    classReviews.forEach(({doc,minutes,alreadyStudied})=>{
+     const task=makeTask(box,"REPASO",doc,alreadyStudied?"Apunte ya estudiado · prioridad de repaso por frecuencia en exámenes":"Revisión breve del contenido del supuesto semanal",minutes,0,planned("REPASO",doc),day.iso);
+     if(task.complete)queueTest(task.doc);
+    });
     const allocated=classReviews.reduce((n,x)=>n+x.minutes,0);
-    if(extraClassReview-allocated>0)box.append(node("p",(extraClassReview-allocated)+" min restantes para repasar dudas después de clase.","week-help"));
+    const tested=scheduleTests(box,extraClassReview-allocated,extraClassReview);
+    if(extraClassReview-allocated-tested.spent>0)box.append(node("p",(extraClassReview-allocated-tested.spent)+" min restantes para repasar dudas después de clase.","week-help"));
    }
    agenda.append(box);
    return;
@@ -642,6 +679,9 @@ function renderPlan(){
   let budget=m-caseMinutes,usedCount=0;
   if(caseMinutes){makeCaseTask(box,caseMinutes);usedCount++;}
   const limit=m<45?2:m<90?4:m<150?8:12;
+  // Primero los test de apuntes cuya lectura terminó en una jornada anterior.
+  const previousTests=scheduleTests(box,Math.min(budget,Math.max(10,Math.floor(m*.25))),m,Math.max(0,limit-usedCount));
+  budget-=previousTests.spent;usedCount+=previousTests.n;
   const leftDays=Math.max(1,studyDays.filter(d=>d.iso>=day.iso).length);
   // Distribuir la carga semanal en minutos (no en número de documentos):
   // un tema de 30 páginas no debe contar igual que uno de una página.
@@ -654,11 +694,14 @@ function renderPlan(){
    const d=queue[0],estimate=planned(type,d),remainingMinutes=left(type,d);
    const slot=Math.min(180,budget,remainingMinutes);
    if(slot<5)return false;
-   makeTask(box,type,d,comment,slot,estimate-remainingMinutes,estimate,day.iso);
+   const task=makeTask(box,type,d,comment,slot,estimate-remainingMinutes,estimate,day.iso);
+   if(task.complete)queueTest(task.doc);
    const next=remainingMinutes-slot;
    if(next<=0){remaining.delete(timeKey(type,d));queue.shift();}
    else remaining.set(timeKey(type,d),next);
    budget-=slot;usedCount++;
+   const tested=scheduleTests(box,budget,m,Math.max(0,limit-usedCount));
+   budget-=tested.spent;usedCount+=tested.n;
    return true;
   };
   let assignedPriorityMinutes=0;
@@ -676,6 +719,8 @@ function renderPlan(){
    assign(rev,"REPASO","Contenido estudiado anteriormente · frecuencia en exámenes");
   if(budget>=5&&usedCount<limit&&!usedCount&&autonomy.length)
    assign(autonomy,"AVANCE","Siguiente apunte pendiente");
+  const testsAtEnd=scheduleTests(box,budget,m,Math.max(0,limit-usedCount));
+  budget-=testsAtEnd.spent;usedCount+=testsAtEnd.n;
   // Estudios opcionales elegidos por el alumno: no alteran la carga de clase
   // ni el tiempo reservado para resolver el supuesto en una sola sesión.
   // Los extras completados permanecen visibles; solo el botón añade otra tarea.
@@ -696,6 +741,9 @@ function renderPlan(){
   if(!usedCount&&!autonomy.length)box.append(node("p","Repaso libre de los apuntes ya estudiados.","week-help"));
   agenda.append(box);
  });
+ if(pendingTests.size){
+  agenda.append(node("p","Quedan "+pendingTests.size+" test sin hueco en la disponibilidad restante. Se recomiendan después de terminar estos apuntes: "+[...pendingTests.values()].map(d=>d.titulo).join("; ")+". No se han añadido minutos por encima de tu horario.","week-help"));
+ }
  if(priority.length){
   const missing=priority.reduce((sum,d)=>sum+left(scheduleMarks.has(keyDoc(d))?"REPASO":"CLASE",d),0);
   agenda.append(node("p","Quedan "+priority.length+" apuntes prioritarios incompletos ("+missing+" min orientativos pendientes). No se dan por estudiados; aumenta tu disponibilidad o continúa con ellos en la siguiente sesión.","week-help"));
