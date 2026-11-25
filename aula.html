@@ -70,7 +70,9 @@ function render(data,demo=false){
  const nextLesson=newest&&!newest.hasVideo&&newest.monthId>=currentMonth?newest.lesson:null;
  let count=0;
  if(!list.length)months.append(make('p','empty','Todavía no tienes mensualidades verificadas para esta aula.'));
- for(const m of list){
+ // Presentar primero la mensualidad más reciente sin alterar la detección de clases.
+ const displayMonths=[...list].sort((a,b)=>String(b.id||'').localeCompare(String(a.id||'')));
+ for(const m of displayMonths){
   const isGranted=m.granted===true;if(isGranted)count++;
   const card=make('article','month'+(isGranted?' yes':''));card.append(make('div','top'));
   const inner=make('div','inner');inner.append(make('h3','',String(m.label||m.id)));
